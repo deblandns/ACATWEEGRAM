@@ -30,5 +30,5 @@ class Check_post:
         self.count = count
 
     def check_last_post(self):
-
+        pass
 

@@ -1,3 +1,4 @@
+import logging
 import sqlite3 as sql
 import telegram
 import tweepy
@@ -30,7 +31,6 @@ auth = tweepy.OAuth1UserHandler(Twitter_config.consumer_key, Twitter_config.cons
 
 api = API(auth)
 
-
 # endregion
 
 
@@ -61,7 +61,8 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
 async def message_admin(update: Update, context: CallbackContext) -> None:
     if "salam" in update.message.text:
         await context.bot.send_message(update.effective_user.id, f"salam user")
-    # get user data
+    # print to see working or not v1.1
+    print(f"this is api verify: {api.verify_credentials().screen_name}")
     # run classes that check for new incoming posts
     instance_Check_post = Check_post(Accounts.accounts)
     instance_Check_post.check_last_post()
