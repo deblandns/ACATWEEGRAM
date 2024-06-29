@@ -1,2 +1,6 @@
-# config data sort like [consumer_key, consumer_secret, access_token, access_token_secret]
-config_twitter = [['oI7oUgmdyjJLTWEc9es5iYhN0', 'trbUyYwN5n2CIIwvd9blw2HRMaMjFSoMeAEQ5YqbvpvHiKUAJR'], ['1806779267663138816-J0gyzVRZA8ngocLpP3WT0so5t7R40D', "o3vdBUbRpHijkuT6PihkZvvbjUG1Sspej58EAbLAIVEYZ"]]
+# the api keys and registration inputs
+consumer_key = 'oI7oUgmdyjJLTWEc9es5iYhN0'
+consumer_secret = 'trbUyYwN5n2CIIwvd9blw2HRMaMjFSoMeAEQ5YqbvpvHiKUAJR'
+access_token = '1806779267663138816-J0gyzVRZA8ngocLpP3WT0so5t7R40D'
+access_token_secret = "o3vdBUbRpHijkuT6PihkZvvbjUG1Sspej58EAbLAIVEYZ"
+bearer_api = "AAAAAAAAAAAAAAAAAAAAALhDugEAAAAAOxSKetRlRAkSkpwG8rt4RjKHkWg%3D3DvMPX0M35Imso8SdwY2Hg9HZtpNeFeGXgO03V6I3IpR7XOWLS"

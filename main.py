@@ -1,5 +1,6 @@
 import sqlite3 as sql
 import telegram
+import tweepy
 from telegram import *
 from telegram.ext import *
 from tweepy import *
@@ -17,10 +18,19 @@ bot = Bot(token=Telegram_config.token)
 # region Twitter config
 
 # this authentication is version O.auth 1.0 because we don`t have premium account, and we only can use v2 Twitter api
-# config twitter data are set like [consumer_key, consumer_secret, access_token, access_token_secret]
-auth = Client(consumer_key=Twitter_config.config_twitter[0][0], consumer_secret=Twitter_config.config_twitter[0][1], access_token=Twitter_config.config_twitter[1][0], access_token_secret=Twitter_config.config_twitter[1][1])
-# this variable will reserve instance of Twitter app function starter
+client = Client(
+    bearer_token=Twitter_config.bearer_api,
+    consumer_key=Twitter_config.consumer_key,
+    consumer_secret=Twitter_config.consumer_secret,
+    access_token=Twitter_config.access_token,
+    access_token_secret=Twitter_config.access_token_secret
+)
+# another authentication method for some other functions
+auth = tweepy.OAuth1UserHandler(Twitter_config.consumer_key, Twitter_config.consumer_secret, Twitter_config.access_token, Twitter_config.access_token_secret)
+
 api = API(auth)
+
+
 # endregion
 
 
@@ -39,7 +49,10 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     if admin_check_response:
         await context.bot.send_message(update.effective_user.id, f"Hi Admin 🧨")
     else:
-        await context.bot.send_message(update.effective_user.id, f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
+        await context.bot.send_message(update.effective_user.id,
+                                       f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
+
+
 # endregion
 
 
@@ -48,9 +61,12 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
 async def message_admin(update: Update, context: CallbackContext) -> None:
     if "salam" in update.message.text:
         await context.bot.send_message(update.effective_user.id, f"salam user")
-    user_id = update.effective_user.id
-    instance_Check_post = Check_post(Accounts.accounts[0])
+    # get user data
+    # run classes that check for new incoming posts
+    instance_Check_post = Check_post(Accounts.accounts)
     instance_Check_post.check_last_post()
+
+
 # endregion
 
 # run polling section

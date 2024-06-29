@@ -1,13 +1,22 @@
 import tweepy
 from tweepy import *
-from config import Telegram_config, Twitter_config, Accounts
+
+from config import Twitter_config
 
 # region Twitter config
 
 # this authentication is version O.auth 1.0 because we don`t have premium account, and we only can use v2 Twitter api
 # config twitter data are set like [consumer_key, consumer_secret, access_token, access_token_secret]
-auth = Client(consumer_key=Twitter_config.config_twitter[0][0], consumer_secret=Twitter_config.config_twitter[0][1], access_token=Twitter_config.config_twitter[1][0], access_token_secret=Twitter_config.config_twitter[1][1])
-# this variable will reserve instance of Twitter app function starter
+client = Client(
+    bearer_token=Twitter_config.bearer_api,
+    consumer_key=Twitter_config.consumer_key,
+    consumer_secret=Twitter_config.consumer_secret,
+    access_token=Twitter_config.access_token,
+    access_token_secret=Twitter_config.access_token_secret
+)
+
+auth = OAuth1UserHandler(Twitter_config.consumer_key, Twitter_config.consumer_secret, Twitter_config.access_token, Twitter_config.access_token_secret)
+
 api = API(auth)
 # endregion
 
@@ -21,15 +30,5 @@ class Check_post:
         self.count = count
 
     def check_last_post(self):
-        try:
-            print(self.screen_name)
-            '''
-            this function will see the channels and send_message to admin
-            :return: data
-            '''
-            # get the last Tweet from chanel timeline
-            tweets = api.search_tweets
-            for tweet in tweets:
-                print(f"{tweet.user.name} said: {tweet.full_text}\n")
-        except tweepy.TweepyException as e:
-            print(f"Error: {e}")
+
+
