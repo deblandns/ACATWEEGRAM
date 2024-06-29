@@ -1,0 +1,2 @@
+# config data sort like [consumer_key, consumer_secret, access_token, access_token_secret]
+config_twitter = [['oI7oUgmdyjJLTWEc9es5iYhN0', 'trbUyYwN5n2CIIwvd9blw2HRMaMjFSoMeAEQ5YqbvpvHiKUAJR'], ['1806779267663138816-J0gyzVRZA8ngocLpP3WT0so5t7R40D', "o3vdBUbRpHijkuT6PihkZvvbjUG1Sspej58EAbLAIVEYZ"]]
