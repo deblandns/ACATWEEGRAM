@@ -1,10 +1,18 @@
 # URL for the CreateTweet endpoint
 import requests
 
+# this is the function that we call when we want to send comment
 url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
 
 
-def send_comment(text, post_id):
+def send_comment(text: str, post_id: str) -> str:
+    """
+    add text you want to send as comment and post id you want to send image to
+    :param text:
+    :param post_id:
+    :return:
+    """
+    # this is cookies when you want to run it on the web and save data on client you can use cookies
     cookies = {
         'auth_token': 'cb8d5b1dfd8bbc3d24e320d27d5bb7d16daf747a	',
         'ct0': 'eb90627d601692cdfcb158c076e98efd5e1088a7e15d8eb4892f19b35f742a452f2688b7443f2ea70d4fa9c76bb32139748b1d2d20eb609b513ba946a2fd427469523815c77a2a594208dbe994e931db',
@@ -19,6 +27,7 @@ def send_comment(text, post_id):
         'twid': 'u%3D1806779267663138816'
     }
 
+    # this is header our configs and setting go there
     headers = {
         'Accept': '*/*',
         'Accept-Encoding': 'gzip, deflate, br, zstd',
@@ -46,6 +55,7 @@ def send_comment(text, post_id):
         'X-Twitter-Client-Language': 'en',
     }
 
+    # this is payload all of inputs go there
     payload = {
         "variables": {"tweet_text": f"{text}",
                       "reply": {"in_reply_to_tweet_id": f"{post_id}", "exclude_reply_user_ids": []},
@@ -71,16 +81,13 @@ def send_comment(text, post_id):
                      "responsive_web_graphql_timeline_navigation_enabled": True,
                      "responsive_web_enhance_cards_enabled": False}, "queryId": "oB-5XsHNAbjvARJEc8CZFw"}
 
+    # run request and post data to server
     data = requests.post(url, json=payload, headers=headers, cookies=cookies)
 
+    # print data to visualize everything we get
     print(data.status_code)
-    print(data.json())
     # this will return post link
     if data.status_code == 200:
         return f"https://x.com/Entekhab_News/status/{post_id}"
     else:
         return "not working my you written comment twice"
-
-
-test = send_comment(f"sala2m", "1807517064388571498")
-print(test)

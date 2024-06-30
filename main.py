@@ -11,7 +11,7 @@ from tweepy import *
 from comments.comments import *
 from tweepy.asynchronous import *
 from config import Telegram_config, Accounts
-from tweet_functions.get_last_post import Check_post
+from tweet_functions import get_last_post, comment_post
 from admin_function.check_admin import AdminClass
 
 # the api keys and registration inputs
@@ -87,7 +87,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
         # send message to page
         await context.bot.send_message(update.effective_user.id, f"salam user")
     # run classes that check for new incoming posts
-    instance_Check_post = Check_post(Accounts.accounts, Accounts.accounts_id_ordered)
+    instance_Check_post = get_last_post.Check_post(Accounts.accounts, Accounts.accounts_id_ordered)
     instance_Check_post.check_last_post()
 
 
@@ -108,8 +108,8 @@ async def get_user_tweets():
             "username": user_name,
             "limit": "1",
             "user_id": user_id,
-            "include_replies": "false",
-            "include_pinned": "false"
+            "include_replies": False,
+            "include_pinned": False
         }
 
         headers = {
@@ -127,10 +127,19 @@ async def get_user_tweets():
         channel_name = data['results'][0]['user']['username']
         follower_count = data['results'][0]['user']['follower_count']
         media_url = data['results'][0]['media_url']
+        print(f"this is tweet id :{tweet_id}")
+        print(f"this is tweet_title: {tweet_title}")
+        print(f"this is channel_name: {channel_name}")
+        print(f"this is follower_count: {follower_count}")
+        print(f"this is media url: {media_url}")
+
+        random_comment_text = random_comment()
+        print(f"random_comment_result {random_comment_text}")
+
+        comment = comment_post.send_comment(random_comment_text, tweet_id)
+        print(f"link of webpage:{comment}")
 
         # this function should compare the last tweet we got and new tweet
-
-        # query_to_check_database =
 
         # this function will get inputs and save them or update them
         async def sql_update(tweet_id: int = None, tweet_title: str = None, chennel_name: str = None, follower_count: str = None, media_url: str = None):
