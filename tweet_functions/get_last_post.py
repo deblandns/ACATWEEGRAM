@@ -8,7 +8,7 @@ consumer_key = 'Lrg6mlBu9KMRHwx9C3X0dCiAb'
 consumer_secret = 'tAj2K7CO3jZeOgJU0MEyfp9mEECnwV4vnApfnL5UL1oE8R24pZ'
 access_token = '1806779267663138816-ABi4RIXEsUSn9E6nU3qrNTutgPQ8Eg'
 access_token_secret = "WzvmfTmVWOVGiRjjTMEAGWdvq4wOgH4sw6sg5IkZoaa1y"
-bearer_api = "AAAAAAAAAAAAAAAAAAAAALhDugEAAAAA%2FgGoqbnw9nkQpMgPR0un%2B6dAK6A%3DxtnYoYs6kJ434gDbwt1h1YMu0GzF1ucgfH8sIUGpXLy3nPXuBT"
+bearer_api = "AAAAAAAAAAAAAAAAAAAAALhDugEAAAAAUwaPIWAJJFzIG00CZjaLMR8wahg%3DJ9Ncoe8WNnPxtiEZL2QNKg3KX0TieybMgpZvsFHAtihVTOfwVc"
 
 
 # region Twitter config
