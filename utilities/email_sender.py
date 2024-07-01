@@ -1,7 +1,11 @@
 import smtplib as sm
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 
-def user_email_sending_for_problem(user_name, channel_name, email, random_comment_text, tweet_title, tweet_id, telegram_id=None):
+def user_email_sending_for_problem(user_name: str = None, channel_name: str = None, email: str = None,
+                                   random_comment_text: str = None, tweet_title: str = None, tweet_id: str = None,
+                                   telegram_id=None):
     content = f"""
                 Hi user: {user_name} 🌟 
             I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
@@ -10,17 +14,25 @@ def user_email_sending_for_problem(user_name, channel_name, email, random_commen
 
             and tweet id was: 🔢 {tweet_id}
                 """
-    # region send user contactus form for me
-    mail = sm.SMTP('smtp.gmail.com', 587)
-    mail.ehlo()
-    mail.starttls()
+
     sender = 'eshopprojectdiardev@gmail.com'
     recipient = email
-    mail.login('eshopprojectdiardev@gmail.com', 'snqrxicwhdulzyfs')
-    header = 'To:' + recipient + '\n' + 'From:' \
-             + sender + '\n' + f'subject: {user_name} send the problem\n'
-    content = header + content
-    mail.sendmail(sender, recipient, content)
-    mail.close()
-    # endregion
-    return True
+
+    # Create the email message
+    msg = MIMEMultipart()
+    msg['From'] = sender
+    msg['To'] = recipient
+    msg['Subject'] = f"{user_name} sent the problem"
+
+    # Attach the message body
+    msg.attach(MIMEText(content, 'plain', 'utf-8'))
+
+    # Send the email
+    try:
+        with sm.SMTP('smtp.gmail.com', 587) as mail:
+            mail.ehlo()
+            mail.starttls()
+            mail.login(sender, 'snqrxicwhdulzyfs')
+            mail.sendmail(sender, recipient, msg.as_string())
+    except Exception as e:
+        print(f"Failed to send email: {e}")
