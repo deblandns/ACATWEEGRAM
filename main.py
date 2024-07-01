@@ -73,12 +73,20 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this class will find out if user is admin or not then response with True or False
     admin_check_instance = AdminClass(user_id)
     admin_check_response = admin_check_instance.check_admin()
+    keyboards = [[
+        KeyboardButton(text=f"⚙ settings")], [KeyboardButton(f'🟢 add your desire channel'), KeyboardButton(f"🔴 delete Channel"), KeyboardButton(f'🛢️ check database')]
+    ]
+    reply_keyboards = ReplyKeyboardMarkup(keyboards, resize_keyboard=True)
     # endregion check admin class
     if admin_check_response:
-        await context.bot.send_message(update.effective_user.id, f"Hi Admin 🧨")
+        await context.bot.send_message(update.effective_user.id, f"""\
+Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
+👓 if you want to look at all data inside database click on check_database
+🔴 if you want to delete channel click on delete_channel
+⚙ if you want to set gmail to get response from or change you data click on settings
+""", reply_markup=reply_keyboards)
     else:
-        await context.bot.send_message(update.effective_user.id,
-                                       f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
+        await context.bot.send_message(update.effective_user.id, f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
 
 
 # endregion
@@ -87,20 +95,44 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
 # region message_handler
 # message the admin that we`ve found new post on Twitter
 async def message_admin(update: Update, context: CallbackContext) -> None:
-    if "salam" in update.message.text:
+    if "⚙ settings" in update.message.text:
         # send message to page
-        await context.bot.send_message(update.effective_user.id, f"salam user")
+        keyboards = [[InlineKeyboardButton('add_gmail', callback_data='gmail_add')], [InlineKeyboardButton('change notify method', callback_data="change_notification_method")]]
+        reply_keyboards_setting = InlineKeyboardMarkup(keyboards)
+        await context.bot.send_message(update.effective_user.id, f"""
+if you click on add gmail and you had another gmail 
+it will replace but if you don`t have any gmail it will save 📩 
+\n 
+if you click on change notify method and click on No we don`t send you notification
+ in email but if you click on yes we will send you email message but email 
+ required otherwise it will get error 🔕 """, reply_markup=reply_keyboards_setting)
+
+    elif "🟢 add your desire channel" in update.message.text:
+        await context.bot.send_message(update.effective_user.id, f"""
+if you want to add channel to check it also you have to add name of channel starting with "@" so please leave channel name
+        """)
+
+    elif "🔴 delete channel" in update.message.text:
+        await context.bot.send_message(update.effective_user.id, f"""
+if you want to delete channel that you added please insert the name below
+
+        """)
+        # todo: check database channels and insert inside here 👆
+    elif "🛢️ check database" in update.message.text:
+        inline_keyboards = [
+            [InlineKeyboardButton('ADMIN DATABASE', callback_data="admin_database_check")], [InlineKeyboardButton("Tweet database", callback_data="tweet_database_check")]
+        ]
+        markup_keyboard_database = InlineKeyboardMarkup(inline_keyboards)
+        await context.bot.send_message(update.effective_user.id, f"""
+just click on which database you want to check
+        """, reply_markup=markup_keyboard_database)
+
     # run classes that check for new incoming posts
     instance_Check_post = get_last_post.Check_post(Accounts.accounts, Accounts.accounts_id_ordered)
     instance_Check_post.check_last_post()
 
 
 # endregion
-
-# run polling section
-app = ApplicationBuilder().token(Telegram_config.token).build()
-app.add_handler(CommandHandler('start', start))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
 
 
 async def get_user_tweets():
@@ -129,12 +161,6 @@ async def get_user_tweets():
         tweet_id = data['results'][0]['tweet_id']
         tweet_title = data['results'][0]['text']
         channel_name = data['results'][0]['user']['username']
-        follower_count = data['results'][0]['user']['follower_count']
-        print(f"this is tweet id :{tweet_id}")
-        print(f"this is tweet_title: {tweet_title}")
-        print(f"this is channel_name: {channel_name}")
-        print(f"this is follower_count: {follower_count}")
-
         random_comment_text = random_comment()
         print(f"random_comment_result {random_comment_text}")
 
@@ -146,15 +172,17 @@ async def get_user_tweets():
         # this function will get inputs and save them or update them and then send comment
         if is_equal:
             print('data are equal')
+            pass
         else:
             try:
                 # if data is not equal it mean there are new post so it will send comment and change the row data
                 tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}')
                 comment_post_date_time = datetime.datetime.now()
                 # make instance of sql functions and save data below it
-                sql_update_instance = SqlFunctions(tweet_channel=f'{user_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
+                sql_update_instance = SqlFunctions(tweet_channel=f'{channel_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
                 save_data = sql_update_instance.update_data()
                 # in this section we will run command to send message to all admins about this happening
+
                 # this is instance of function that for each id inside admin table it will send message
                 sql_admin_instance = AdminSql()
                 data = sql_admin_instance.send_all_admin_ids()
@@ -167,7 +195,6 @@ async def get_user_tweets():
                     [InlineKeyboardButton('go to tweet page 🔗', url=tweet_link)],
                     [
                         InlineKeyboardButton('action 1', callback_data="action1"),
-                        InlineKeyboardButton('action 2', callback_data="action 2")
                     ]
                 ]
                 reply_markup_keyboard = InlineKeyboardMarkup(keyboards, )
@@ -178,11 +205,14 @@ I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title
                 \n
 to channel: {user_name}                
 
-and tweet id was: 🔢 {tweet_id}""", disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
+and tweet id was: 🔢 {tweet_id}
+\n
+date & time: {comment_post_date_time}
+""", disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
                 # if user in it`s setting turn email sending true we can send user notification from email also
                 if id[2]:
-                    user_email_sending_for_problem(user_name=f"{id[1]}", channel_name=f"{channel_name}", email=f"{id[3]}", random_comment_text=f"{random_comment_text}", tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
-                    if user_email_sending_for_problem:
+                    user_email_sending_of_tweets_data(user_name=f"{id[1]}", channel_name=f"{channel_name}", email=f"{id[3]}", random_comment_text=f"{random_comment_text}", tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
+                    if user_email_sending_of_tweets_data:
                         await bot.send_message(chat_id=f"{id[0]}", text=f"we`ve sent you the email address because you gave us that permission 📧", disable_web_page_preview=True)
                     else:
                         await bot.send_message(chat_id=f"{id[0]}", text=f"we can`t send you email notification that`s may because you ent us wrong email address")
@@ -192,18 +222,23 @@ and tweet id was: 🔢 {tweet_id}""", disable_web_page_preview=True, reply_marku
                 logging.error(msg='can`t send message may it`s repetitive')
 
 
-async def run_forever():
-    while True:
-        await get_user_tweets()
-        await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
+# async def run_forever():
+#     while True:
+#         await get_user_tweets()
+#         await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
+#
+#
+# # this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
+# # after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
+# # because my it block our bot and our services
+# if __name__ == "__main__":
+#     loop = asyncio.get_event_loop()
+#     loop.run_until_complete(run_forever())
 
-
-# this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
-# after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
-# because my it block our bot and our services
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_forever())
+# run polling section
+app = ApplicationBuilder().token(Telegram_config.token).build()
+app.add_handler(CommandHandler('start', start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
 
 # Start the async task to fetch tweets
 if app.run_polling:

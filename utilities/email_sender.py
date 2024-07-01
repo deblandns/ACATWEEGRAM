@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
-def user_email_sending_for_problem(user_name: str = None, channel_name: str = None, email: str = None,
+def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str = None, email: str = None,
                                    random_comment_text: str = None, tweet_title: str = None, tweet_id: str = None,
                                    telegram_id=None):
     content = f"""
