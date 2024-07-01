@@ -86,6 +86,7 @@ def send_comment(text: str, post_id: str) -> str:
 
     # print data to visualize everything we get
     print(data.status_code)
+    print(data.json())
     # this will return post link
     if data.status_code == 200:
         return f"https://x.com/Entekhab_News/status/{post_id}"

@@ -8,6 +8,7 @@ import datetime
 import requests as re
 from telegram import *
 from telegram.ext import *
+from sql_files.sql_tweet_functions import *
 from tweepy import *
 from comments.comments import *
 from tweepy.asynchronous import *
@@ -135,29 +136,28 @@ async def get_user_tweets():
         random_comment_text = random_comment()
         print(f"random_comment_result {random_comment_text}")
 
-        # this function should compare the last tweet we got and new tweet
-
-        def sql_check(tweet_id: int = None, channel_name: str = None):
-            command = f''
-            tweet_data = cursor.execute(command)
-            tweet_id_from_database = tweet_data.fetchall()[0][0]
-            if tweet_id_from_database == tweet_id:
-                return True
-            else:
-                return False
-
-        check_sql_variable = sql_check(tweet_id=tweet_id, channel_name=user_name)
+        # in here we will get instance of class sql function and then check the new tweet then run functions
+        print(f"this is user name of loop {user_name}")
+        # there are instance of sql function to run method of inside it
+        check_data_equality = SqlFunctions(tweet_channel=f'{user_name}', tweet_id=f'{tweet_id}')
+        is_equal = check_data_equality.Is_tweet_data_equal()
 
         # this function will get inputs and save them or update them and then send comment
-        def insert_new_data_and_send_comment(tweet_channel: str = None, tweet_id: str = None, tweet_title: str = None, used_comment: str = None, tweet_link: str = None, comment_post_datetime: datetime = datetime.datetime):
+        if is_equal:
+            print('data are equal')
+        else:
             try:
-                comment_page_link = comment_post.send_comment(random_comment_text, tweet_id)
-                print(f"link of webpage:{comment_page_link}")
-                cursor.execute(
-                    f'UPDATE tweet_data SET tweet_id={tweet_id}, tweet_title={tweet_title}, used_comment={used_comment}, tweet_link={tweet_link}, comment_post_datetime={comment_post_datetime} WHERE tweet_channel={tweet_channel}')
-                print('row updated')
+                # if data is not equal it mean there are new post so it will send comment and change the row data
+                tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}')
+                comment_post_date_time = datetime.datetime.now()
+                sql_update_instance = SqlFunctions(tweet_channel=f'{channel_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
+                save_data = sql_update_instance.update_data()
+                if save_data:
+                    print(f"new row updated from {channel_name} and new dataset has been added")
+                else:
+                    print(f"there is problem with adding data to database")
             except:
-                return 'error occured'
+                print('can`t send comment may it`s repetitive')
 
 
 async def run_forever():

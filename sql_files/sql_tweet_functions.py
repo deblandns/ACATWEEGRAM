@@ -29,10 +29,11 @@ class SqlFunctions:
         self.comment_post_datetime = comment_post_datetime
 
     # this function will check new posts and last posts that we checked and if they are different in id it will return True else it will return false
-    def Is_tweet_data_equal(self):
+    def Is_tweet_data_equal(self) -> bool:
         """
         just pass the parameters of class and get instance of the class the call this function it`ll automatically return true or false to check new data
-        :return:
+        this is tweet id to check is tweet new or not:param tweet_id:
+        we need tweet channel to check which channel posted it :param tweet_channel:
         """
         # this variable will run sql command and get tweet_id number from tweet_data database based on channel name
         get_all_data_equal_to_tweet_channel = cursor.execute(f"SELECT tweet_id FROM tweet_data WHERE tweet_channel = '{self.tweet_channel}' ")
@@ -40,4 +41,13 @@ class SqlFunctions:
         if tweet_sql_id == self.tweet_id:
             return True
         else:
+            return False
+
+    def update_data(self) -> bool:
+        try:
+            cursor.execute(
+                f"UPDATE tweet_data SET tweet_id = '{self.tweet_id}', tweet_title = '{self.tweet_title}', used_comment = '{self.used_comment}', tweet_link = '{self.tweet_link}', comment_post_datetime = '{self.comment_post_datetime}' WHERE tweet_channel='{self.tweet_channel}' ")
+            connect.commit()
+            return True
+        except:
             return False
