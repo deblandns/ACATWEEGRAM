@@ -150,7 +150,7 @@ async def get_user_tweets():
                 # if data is not equal it mean there are new post so it will send comment and change the row data
                 tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}')
                 comment_post_date_time = datetime.datetime.now()
-                sql_update_instance = SqlFunctions(tweet_channel=f'{channel_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
+                sql_update_instance = SqlFunctions(tweet_channel=f'{user_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
                 save_data = sql_update_instance.update_data()
                 if save_data:
                     print(f"new row updated from {channel_name} and new dataset has been added")
