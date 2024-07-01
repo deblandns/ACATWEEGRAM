@@ -117,8 +117,14 @@ now_channels = {list}
 
     # you can delete your desire channel to prevent sending comment and data
     elif "🔴 delete Channel" in update.message.text:
+        instance_of_channels = SqlShowAndInsert()
+        datas = instance_of_channels.check_database()
+        list_for_delete = []
+        for data in datas:
+            list_for_delete.append(data)
         await context.bot.send_message(update.effective_user.id, f"""
-if you want to delete channel that you added please insert the name below
+if you want to delete channel that you added please insert the name below \n\n
+these are now list data = {list_for_delete}
         """)
         return DELETING_CHANNEL
 
@@ -154,6 +160,7 @@ async def add_channel(update: Update, context: CallbackContext) -> None:
 async def delete_channel(update: Update, context: CallbackContext) -> None:
     channel_name = update.message.text
     # Add logic to delete the channel from monitoring
+    remove_status = remove_channel(channel_name)
     await context.bot.send_message(update.effective_user.id, f"Channel '{channel_name}' has been deleted.")
     return ConversationHandler.END
 
