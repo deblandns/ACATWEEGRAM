@@ -14,6 +14,7 @@ from tweepy import *
 from comments.comments import *
 from tweepy.asynchronous import *
 from config import Telegram_config, Accounts
+from utilities.email_sender import *
 from tweet_functions import get_last_post, comment_post
 from admin_function.check_admin import AdminClass
 
@@ -116,8 +117,8 @@ async def get_user_tweets():
         }
 
         headers = {
-            "x-rapidapi-key": "b2ca57fd49mshcceaec273d8e2a0p143921jsn9a2a5cf40ef4",
-            "x-rapidapi-host": "twitter154.p.rapidapi.com"
+            "x-rapidapi-key": "169b544eacmshf12c22e5e44e9b2p1d76ffjsna221c640259d",
+            "x-rapidapi-hos": "twitter154.p.rapidapi.com"
         }
 
         # # send request by get method and get response
@@ -150,24 +151,45 @@ async def get_user_tweets():
                 # if data is not equal it mean there are new post so it will send comment and change the row data
                 tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}')
                 comment_post_date_time = datetime.datetime.now()
+                # make instance of sql functions and save data below it
                 sql_update_instance = SqlFunctions(tweet_channel=f'{user_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
                 save_data = sql_update_instance.update_data()
                 # in this section we will run command to send message to all admins about this happening
                 # this is instance of function that for each id inside admin table it will send message
                 sql_admin_instance = AdminSql()
                 data = sql_admin_instance.send_all_admin_ids()
+                keyboards = [
+                    [InlineKeyboardButton('go to tweet page 🔗', url=tweet_link)],
+                    [
+                        InlineKeyboardButton('action 1', callback_data="action1"),
+                        InlineKeyboardButton('action 2', callback_data="action 2")
+                    ]
+                ]
+                reply_markup_keyboard = InlineKeyboardMarkup(keyboards, )
                 for id in data:
                     await bot.send_message(chat_id=f"{id[0]}", text=f"""
 Hi user: {id[1]} 🌟 
 I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
                 \n
-and tweet id was: 🔢 {tweet_id}""", disable_web_page_preview=True)
+to channel: {user_name}                
+
+and tweet id was: 🔢 {tweet_id}""", disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
+                # if user in it`s setting turn email sending true we can send user notification from email also
+                if id[2] == True:
+                    user_email_sending_for_problem(user_name=f"{id[1]}", channel_name=channel_name, email=f"{id[3]}", random_comment_text=f"{random_comment_text}", tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
+                    if user_email_sending_for_problem:
+                        await bot.send_message(chat_id=f"{id[0]}", text=f"we`ve sent you the email address because you gave us that permission 📧", disable_web_page_preview=True)
+                    else:
+                        await bot.send_message(chat_id=f"{id[0]}", text=f"we can`t send you email notification that`s may because you ent us wrong email address")
+                else:
+                    pass
                 if save_data:
                     print(f"new row updated from {channel_name} and new dataset has been added")
+                    logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
                 else:
-                    print(f"there is problem with adding data to database")
+                    logging.debug(msg=f"there is problem with adding data to database")
             except:
-                print('can`t send comment may it`s repetitive')
+                logging.error(msg='can`t send message may it`s repetitive')
 
 
 async def run_forever():
