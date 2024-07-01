@@ -138,7 +138,7 @@ async def get_user_tweets():
         # this function should compare the last tweet we got and new tweet
 
         def sql_check(tweet_id: int = None, channel_name: str = None):
-            command = f'SELECT tweet_id FROM tweet_data WHERE tweet_channel = "{channel_name}"'
+            command = f''
             tweet_data = cursor.execute(command)
             tweet_id_from_database = tweet_data.fetchall()[0][0]
             if tweet_id_from_database == tweet_id:
@@ -158,10 +158,6 @@ async def get_user_tweets():
                 print('row updated')
             except:
                 return 'error occured'
-        if check_sql_variable:
-            print(f"still data doesn`t changed")
-        else:
-            insert_new_data_and_send_comment(tweet_channel=user_name, tweet_id=tweet_id, tweet_title=tweet_title, used_comment=random_comment_text, tweet_link=f"https://x.com/Entekhab_News/status/{tweet_id}")
 
 
 async def run_forever():
