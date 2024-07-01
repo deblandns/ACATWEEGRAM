@@ -45,8 +45,7 @@ class SqlFunctions:
 
     def update_data(self) -> bool:
         try:
-            cursor.execute(
-                f"UPDATE tweet_data SET tweet_id = '{self.tweet_id}', tweet_title = '{self.tweet_title}', used_comment = '{self.used_comment}', tweet_link = '{self.tweet_link}', comment_post_datetime = '{self.comment_post_datetime}' WHERE tweet_channel='{self.tweet_channel}' ")
+            cursor.execute(f"UPDATE tweet_data SET tweet_id = '{self.tweet_id}', tweet_title = '{self.tweet_title}', used_comment = '{self.used_comment}', tweet_link = '{self.tweet_link}', comment_post_datetime = '{self.comment_post_datetime}' WHERE tweet_channel='{self.tweet_channel}' ")
             connect.commit()
             return True
         except:
