@@ -12,7 +12,6 @@ from sql_files.sql_tweet_functions import *
 from sql_files.sql_admin_functions import *
 from sql_files.add_channel import *
 from sql_files.remove_channel import *
-from sql_files.check_database import *
 from tweepy import *
 from comments.comments import *
 from tweepy.asynchronous import *
@@ -67,14 +66,13 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     admin_check_instance = AdminClass(user_id)
     admin_check_response = admin_check_instance.check_admin()
     keyboards = [[
-        KeyboardButton(text=f"⚙ settings")], [KeyboardButton(f'🟢 add your desire channel'), KeyboardButton(f"🔴 delete Channel"), KeyboardButton(f'🛢️ check database')]
+        KeyboardButton(text=f"⚙ settings")], [KeyboardButton(f'🟢 add your desire channel'), KeyboardButton(f"🔴 delete Channel")]
     ]
     reply_keyboards = ReplyKeyboardMarkup(keyboards, resize_keyboard=True)
     # endregion check admin class
     if admin_check_response:
         await context.bot.send_message(update.effective_user.id, f"""\
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-👓 if you want to look at all data inside database click on check_database
 🔴 if you want to delete channel click on delete_channel
 ⚙ if you want to set gmail to get response from or change you data click on settings
 """, reply_markup=reply_keyboards)
@@ -127,16 +125,6 @@ if you want to delete channel that you added please insert the name below \n\n
 these are now list data = {list_for_delete}
         """)
         return DELETING_CHANNEL
-
-    # check database with two options that you can check admin, tweeter_data in your database to find out what happened last time
-    elif "🛢️ check database" in update.message.text:
-        inline_keyboards = [
-            [InlineKeyboardButton('ADMIN DATABASE', callback_data="admin_database_check")], [InlineKeyboardButton("Tweet database", callback_data="tweet_database_check")]
-        ]
-        markup_keyboard_database = InlineKeyboardMarkup(inline_keyboards)
-        await context.bot.send_message(update.effective_user.id, f"""
-just click on which database you want to check
-        """, reply_markup=markup_keyboard_database)
 
     # run classes that check for new incoming posts
     instance_Check_post = get_last_post.Check_post(Accounts.accounts, Accounts.accounts_id_ordered)
