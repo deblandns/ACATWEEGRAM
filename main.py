@@ -4,6 +4,7 @@ import time
 import telegram
 import asyncio
 import tweepy
+import datetime
 import requests as re
 from telegram import *
 from telegram.ext import *
@@ -117,7 +118,7 @@ async def get_user_tweets():
             "x-rapidapi-host": "twitter154.p.rapidapi.com"
         }
 
-        # send request by get method and get response
+        # # send request by get method and get response
         response = re.get(url, headers=headers, params=querystring)
 
         # get and extract data from response
@@ -126,24 +127,41 @@ async def get_user_tweets():
         tweet_title = data['results'][0]['text']
         channel_name = data['results'][0]['user']['username']
         follower_count = data['results'][0]['user']['follower_count']
-        media_url = data['results'][0]['media_url']
         print(f"this is tweet id :{tweet_id}")
         print(f"this is tweet_title: {tweet_title}")
         print(f"this is channel_name: {channel_name}")
         print(f"this is follower_count: {follower_count}")
-        print(f"this is media url: {media_url}")
 
         random_comment_text = random_comment()
         print(f"random_comment_result {random_comment_text}")
 
-        comment = comment_post.send_comment(random_comment_text, tweet_id)
-        print(f"link of webpage:{comment}")
-
         # this function should compare the last tweet we got and new tweet
 
-        # this function will get inputs and save them or update them
-        async def sql_update(tweet_id: int = None, tweet_title: str = None, chennel_name: str = None, follower_count: str = None, media_url: str = None):
-            pass
+        def sql_check(tweet_id: int = None, channel_name: str = None):
+            command = f'SELECT tweet_id FROM tweet_data WHERE tweet_channel = "{channel_name}"'
+            tweet_data = cursor.execute(command)
+            tweet_id_from_database = tweet_data.fetchall()[0][0]
+            if tweet_id_from_database == tweet_id:
+                return True
+            else:
+                return False
+
+        check_sql_variable = sql_check(tweet_id=tweet_id, channel_name=user_name)
+
+        # this function will get inputs and save them or update them and then send comment
+        def insert_new_data_and_send_comment(tweet_channel: str = None, tweet_id: str = None, tweet_title: str = None, used_comment: str = None, tweet_link: str = None, comment_post_datetime: datetime = datetime.datetime):
+            try:
+                comment_page_link = comment_post.send_comment(random_comment_text, tweet_id)
+                print(f"link of webpage:{comment_page_link}")
+                cursor.execute(
+                    f'UPDATE tweet_data SET tweet_id={tweet_id}, tweet_title={tweet_title}, used_comment={used_comment}, tweet_link={tweet_link}, comment_post_datetime={comment_post_datetime} WHERE tweet_channel={tweet_channel}')
+                print('row updated')
+            except:
+                return 'error occured'
+        if check_sql_variable:
+            print(f"still data doesn`t changed")
+        else:
+            insert_new_data_and_send_comment(tweet_channel=user_name, tweet_id=tweet_id, tweet_title=tweet_title, used_comment=random_comment_text, tweet_link=f"https://x.com/Entekhab_News/status/{tweet_id}")
 
 
 async def run_forever():
@@ -152,6 +170,9 @@ async def run_forever():
         await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
 
 
+# this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
+# after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
+# because my it block our bot and our services
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run_forever())
@@ -160,7 +181,3 @@ if __name__ == "__main__":
 if app.run_polling:
     print("working..")
 app.run_polling()
-
-# this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
-# after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
-# because my it block our bot and our services

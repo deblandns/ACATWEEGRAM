@@ -90,4 +90,4 @@ def send_comment(text: str, post_id: str) -> str:
     if data.status_code == 200:
         return f"https://x.com/Entekhab_News/status/{post_id}"
     else:
-        return "not working my you written comment twice"
+        return "not working may you written comment twice"
