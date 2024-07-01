@@ -17,6 +17,7 @@ from comments.comments import *
 from tweepy.asynchronous import *
 from config import Telegram_config, Accounts
 from utilities.email_sender import *
+from settings import add_gmail_to_database, change_get_notification_gmail
 from tweet_functions import get_last_post, comment_post
 from admin_function.check_admin import AdminClass
 
@@ -175,7 +176,10 @@ async def get_call_back_data(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     await query.answer()
     print(query.data)
-
+    if query.data == "gmail_add":
+        email = add_gmail_to_database.change_gmail(id=update.effective_user.id, gmail=f"{query.data}")
+    elif query.data == "change_notification_method":
+        print(f"it was change the notification")
 
 # async def get_user_tweets():
 #     for user_name, user_id in zip(Accounts.accounts, Accounts.accounts_id_ordered):
