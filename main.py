@@ -9,6 +9,7 @@ import requests as re
 from telegram import *
 from telegram.ext import *
 from sql_files.sql_tweet_functions import *
+from sql_files.sql_admin_functions import *
 from tweepy import *
 from comments.comments import *
 from tweepy.asynchronous import *
@@ -141,7 +142,6 @@ async def get_user_tweets():
         # there are instance of sql function to run method of inside it
         check_data_equality = SqlFunctions(tweet_channel=f'{user_name}', tweet_id=f'{tweet_id}')
         is_equal = check_data_equality.Is_tweet_data_equal()
-
         # this function will get inputs and save them or update them and then send comment
         if is_equal:
             print('data are equal')
@@ -152,6 +152,16 @@ async def get_user_tweets():
                 comment_post_date_time = datetime.datetime.now()
                 sql_update_instance = SqlFunctions(tweet_channel=f'{user_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
                 save_data = sql_update_instance.update_data()
+                # in this section we will run command to send message to all admins about this happening
+                # this is instance of function that for each id inside admin table it will send message
+                sql_admin_instance = AdminSql()
+                data = sql_admin_instance.send_all_admin_ids()
+                for id in data:
+                    await bot.send_message(chat_id=f"{id[0]}", text=f"""
+Hi user: {id[1]} 🌟 
+I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
+                \n
+and tweet id was: 🔢 {tweet_id}""", disable_web_page_preview=True)
                 if save_data:
                     print(f"new row updated from {channel_name} and new dataset has been added")
                 else:
