@@ -26,7 +26,7 @@ access_token_secret = "WzvmfTmVWOVGiRjjTMEAGWdvq4wOgH4sw6sg5IkZoaa1y"
 bearer_api = "AAAAAAAAAAAAAAAAAAAAALhDugEAAAAAUwaPIWAJJFzIG00CZjaLMR8wahg%3DJ9Ncoe8WNnPxtiEZL2QNKg3KX0TieybMgpZvsFHAtihVTOfwVc"
 
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+# logging.basicConfig(level=logging.INFO)
 
 # config database
 connect = sql.connect('acatweegram.db')
@@ -49,10 +49,20 @@ client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret,
                 access_token=access_token, access_token_secret=access_token_secret)
 
 
-# region start
+# # Verify credentials
+# try:
+#     api.verify_credentials()
+#     print("Authentication OK")
+#     available_trends = api.available_trends()
+#     print(f"this is hometimeline :{available_trends}")
+# except Exception as e:
+#     print("Error during authentication", e)
+#
+#
+# # endregion
 
-# Define the conversation states
-ADDING_CHANNEL, DELETING_CHANNEL, SETTING_GMAIL, CHANGE_NOTIFY_METHOD = range(4)
+
+# region start
 
 
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
@@ -97,22 +107,20 @@ it will replace but if you don`t have any gmail it will save 📩
 if you click on change notify method and click on No we don`t send you notification
  in email but if you click on yes we will send you email message but email 
  required otherwise it will get error 🔕 """, reply_markup=reply_keyboards_setting)
-        return SETTING_GMAIL
 
     # you can add your desire tweeter user channel to get data from and automatically send comment
     elif "🟢 add your desire channel" in update.message.text:
         await context.bot.send_message(update.effective_user.id, f"""
 if you want to add channel to check it also you have to add name of channel starting with "@" so please leave channel name
         """)
-        return ADDING_CHANNEL
 
     # you can delete your desire channel to prevent sending comment and data
     elif "🔴 delete channel" in update.message.text:
         await context.bot.send_message(update.effective_user.id, f"""
 if you want to delete channel that you added please insert the name below
-        """)
-        return DELETING_CHANNEL
 
+        """)
+        # todo: check database channels and insert inside here 👆
     # check database with two options that you can check admin, tweeter_data in your database to find out what happened last time
     elif "🛢️ check database" in update.message.text:
         inline_keyboards = [
@@ -128,47 +136,7 @@ just click on which database you want to check
     instance_Check_post.check_last_post()
 
 
-# Handlers for conversation states
-async def add_channel(update: Update, context: CallbackContext) -> None:
-    channel_name = update.message.text
-    if channel_name.startswith('@'):
-        print(channel_name)
-        # Process the channel name (e.g., store it, start monitoring it, etc.)
-        await context.bot.send_message(update.effective_user.id, f"Channel '{channel_name}' has been added and will be monitored.")
-    else:
-        await context.bot.send_message(update.effective_user.id, "Please provide a valid channel name starting with '@'")
-    return ConversationHandler.END
-
-
-async def delete_channel(update: Update, context: CallbackContext) -> None:
-    channel_name = update.message.text
-    # Add logic to delete the channel from monitoring
-    await context.bot.send_message(update.effective_user.id, f"Channel '{channel_name}' has been deleted.")
-    return ConversationHandler.END
-
-
-async def setting_gmail(update: Update, context: CallbackContext) -> None:
-    # Add logic to handle Gmail setting
-    await context.bot.send_message(update.effective_user.id, "Gmail setting updated.")
-    return ConversationHandler.END
-
-
-async def change_notify_method(update: Update, context: CallbackContext) -> None:
-    # Add logic to handle notification method change
-    await context.bot.send_message(update.effective_user.id, "Notification method changed.")
-    return ConversationHandler.END
-
-
-# Fallback handler in case of an unexpected input
-async def cancel(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text('Operation cancelled.')
-    return ConversationHandler.END
-
-
-async def get_call_back_data(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    await query.answer()
-    print(query.data)
+# endregion
 
 
 async def get_user_tweets():
@@ -216,7 +184,7 @@ async def get_user_tweets():
                 comment_post_date_time = datetime.datetime.now()
                 # make instance of sql functions and save data below it
                 sql_update_instance = SqlFunctions(tweet_channel=f'{channel_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f"{tweet_link}", comment_post_datetime=f'{comment_post_date_time}')
-                save_data = sql_update_instance.update_data_or_insert()
+                save_data = sql_update_instance.update_data()
                 # in this section we will run command to send message to all admins about this happening
 
                 # this is instance of function that for each id inside admin table it will send message
@@ -229,6 +197,9 @@ async def get_user_tweets():
                     logging.debug(msg=f"there is problem with adding data to database")
                 keyboards = [
                     [InlineKeyboardButton('go to tweet page 🔗', url=tweet_link)],
+                    [
+                        InlineKeyboardButton('action 1', callback_data="action1"),
+                    ]
                 ]
                 reply_markup_keyboard = InlineKeyboardMarkup(keyboards, )
                 for id in data:
@@ -255,36 +226,29 @@ date & time: {comment_post_date_time}
                 logging.error(msg='can`t send message may it`s repetitive')
 
 
-async def run_forever():
-    while True:
-        await get_user_tweets()
-        await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
+# async def run_forever():
+#     while True:
+#         await get_user_tweets()
+#         await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
+#
+#
+# # this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
+# # after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
+# # because my it block our bot and our services
+# if __name__ == "__main__":
+#     loop = asyncio.get_event_loop()
+#     loop.run_until_complete(run_forever())
 
+async def get_call_back_data(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
 
-# this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
-# after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
-# because my it block our bot and our services
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_forever())
+    await query.answer()
+    print(query.data)
 
-
-# Create the application and pass it your bot's token
+# run polling section
 app = ApplicationBuilder().token(Telegram_config.token).build()
-
-# Define the conversation handler with the states
-conv_handler = ConversationHandler(
-    entry_points=[CommandHandler('start', start), MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin)],
-    states={
-        ADDING_CHANNEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_channel)],
-        DELETING_CHANNEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, delete_channel)],
-        SETTING_GMAIL: [MessageHandler(filters.TEXT & ~filters.COMMAND, setting_gmail)],
-        CHANGE_NOTIFY_METHOD: [MessageHandler(filters.TEXT & ~filters.COMMAND, change_notify_method)],
-    },
-    fallbacks=[CommandHandler('cancel', cancel)]
-)
-
-app.add_handler(conv_handler)
+app.add_handler(CommandHandler('start', start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
 app.add_handler(CallbackQueryHandler(get_call_back_data))
 
 # Start the async task to fetch tweets
