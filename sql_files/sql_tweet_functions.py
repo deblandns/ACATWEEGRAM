@@ -36,7 +36,8 @@ class SqlFunctions:
         we need tweet channel to check which channel posted it :param tweet_channel:
         """
         # this variable will run sql command and get tweet_id number from tweet_data database based on channel name
-        get_all_data_equal_to_tweet_channel = cursor.execute(f"SELECT tweet_id FROM tweet_data WHERE tweet_channel = '{self.tweet_channel}' ")
+        get_all_data_equal_to_tweet_channel = cursor.execute(
+            f"SELECT tweet_id FROM tweet_data WHERE tweet_channel = '{self.tweet_channel}'")
         tweet_sql_id = get_all_data_equal_to_tweet_channel.fetchall()[0][0]
         if tweet_sql_id == self.tweet_id:
             return True

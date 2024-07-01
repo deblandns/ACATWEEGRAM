@@ -117,8 +117,8 @@ async def get_user_tweets():
         }
 
         headers = {
-            "x-rapidapi-key": "169b544eacmshf12c22e5e44e9b2p1d76ffjsna221c640259d",
-            "x-rapidapi-hos": "twitter154.p.rapidapi.com"
+            "x-rapidapi-key": "cb55117503mshb4d680ddb2c3067p1364dejsn60b23ba912e6",
+            "x-rapidapi-host": "twitter154.p.rapidapi.com"
         }
 
         # # send request by get method and get response
@@ -158,6 +158,11 @@ async def get_user_tweets():
                 # this is instance of function that for each id inside admin table it will send message
                 sql_admin_instance = AdminSql()
                 data = sql_admin_instance.send_all_admin_ids()
+                if save_data:
+                    print(f"new row updated from {channel_name} and new dataset has been added")
+                    logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
+                else:
+                    logging.debug(msg=f"there is problem with adding data to database")
                 keyboards = [
                     [InlineKeyboardButton('go to tweet page 🔗', url=tweet_link)],
                     [
@@ -175,19 +180,14 @@ to channel: {user_name}
 
 and tweet id was: 🔢 {tweet_id}""", disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
                 # if user in it`s setting turn email sending true we can send user notification from email also
-                if id[2] == True:
-                    user_email_sending_for_problem(user_name=f"{id[1]}", channel_name=channel_name, email=f"{id[3]}", random_comment_text=f"{random_comment_text}", tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
+                if id[2]:
+                    user_email_sending_for_problem(user_name=f"{id[1]}", channel_name=f"{channel_name}", email=f"{id[3]}", random_comment_text=f"{random_comment_text}", tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
                     if user_email_sending_for_problem:
                         await bot.send_message(chat_id=f"{id[0]}", text=f"we`ve sent you the email address because you gave us that permission 📧", disable_web_page_preview=True)
                     else:
                         await bot.send_message(chat_id=f"{id[0]}", text=f"we can`t send you email notification that`s may because you ent us wrong email address")
                 else:
                     pass
-                if save_data:
-                    print(f"new row updated from {channel_name} and new dataset has been added")
-                    logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
-                else:
-                    logging.debug(msg=f"there is problem with adding data to database")
             except:
                 logging.error(msg='can`t send message may it`s repetitive')
 
