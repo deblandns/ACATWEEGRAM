@@ -5,7 +5,7 @@ import requests
 url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
 
 
-def send_comment(text: str, post_id: str) -> str:
+def send_comment(text: str, post_id: str, channel_name: str) -> str:
     """
     add text you want to send as comment and post id you want to send image to
     :param text:
@@ -88,6 +88,6 @@ def send_comment(text: str, post_id: str) -> str:
     print(data.status_code)
     # this will return post link
     if data.status_code == 200:
-        return f"https://x.com/Entekhab_News/status/{post_id}"
+        return f"https://x.com/{channel_name}/status/{post_id}"
     else:
         return "not working may you written comment twice"
