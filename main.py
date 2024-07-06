@@ -100,8 +100,16 @@ send us your email address for example: 👉 youremail@gmail.com
         keyboards = [[InlineKeyboardButton('yes 🟢', callback_data='want_notification')],
                      [InlineKeyboardButton('no 🔴', callback_data="don`t_want_notification")]]
         inline_notification_keyboards = InlineKeyboardMarkup(keyboards)
+        instance_of_email_status = change_get_notification_gmail.EmailSendingStatus(user_id=update.effective_user.id)
+        data = instance_of_email_status.CheckDataStatus()
+        if data:
+            print(data[0][2])
+        else:
+            await bot.send_message(chat_id=update.effective_user.id, text=f"maybe you are not admin or you don`t have any data please contact this email : hoseinnysyan1385@gmail.com")
         await context.bot.send_message(update.effective_user.id, f"""
         if you want to get email notification click on yes 🔔 \n\n if you don`t want to get the notification click on no 🔕
+        \n
+{'🟩   your email sending status is on we can send you report from email' if data[0][2] == 1 else '🔴   your email sending status is off we don`t send you report from email'}
         """, reply_markup=inline_notification_keyboards)
 
     # you can add your desire tweeter user channel to get data from and automatically send comment
@@ -162,7 +170,6 @@ async def setting_gmail(update: Update, context: CallbackContext) -> None:
         await context.bot.send_message(update.effective_user.id,
                                        "you don`t entered email with '@' or .com or 'gmail' please write you email exactly like youremail@gmail.com replace youremail with your email name")
     else:
-        # todo: add gmail to database
         user_id = update.effective_user.id
         is_added = add_gmail_to_database.change_gmail(user_id, user_gmail_name)
         if is_added:
@@ -177,11 +184,22 @@ async def setting_gmail(update: Update, context: CallbackContext) -> None:
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     await query.answer()
-    print(query.data)
     if query.data == "want_notification":
-        print("user want to change setting like get notification from server")
+        email_sending_on_instance = change_get_notification_gmail.EmailSendingStatus(update.effective_user.id)
+        sending_email_turn_on = email_sending_on_instance.TurnEmailSendingOn()
+        if sending_email_turn_on:
+            await context.bot.send_message(update.effective_user.id, f"now you email sending is on and we can send you report message from email")
+        else:
+            await context.bot.send_message(update.effective_user.id, f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
     if query.data == "don`t_want_notification":
-        print("user don`t want to get notification")
+        email_sending_off_instance = change_get_notification_gmail.EmailSendingStatus(update.effective_user.id)
+        sending_email_turn_off = email_sending_off_instance.TurnOffEmailSending()
+        if sending_email_turn_off:
+            await context.bot.send_message(update.effective_user.id,
+                                           f"now we can`t send you report message via email")
+        else:
+            await context.bot.send_message(update.effective_user.id,
+                                           f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
 
 
 # Fallback handler in case of an unexpected input
