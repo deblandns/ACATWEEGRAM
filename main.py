@@ -103,7 +103,7 @@ send us your email address for example: 👉 youremail@gmail.com
         instance_of_email_status = change_get_notification_gmail.EmailSendingStatus(user_id=update.effective_user.id)
         data = instance_of_email_status.CheckDataStatus()
         if data:
-            print(data[0][2])
+            pass
         else:
             await bot.send_message(chat_id=update.effective_user.id, text=f"maybe you are not admin or you don`t have any data please contact this email : hoseinnysyan1385@gmail.com")
         await context.bot.send_message(update.effective_user.id, f"""
