@@ -88,6 +88,8 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
     print(data.status_code)
     # this will return post link
     if data.status_code == 200:
-        return f"https://x.com/{channel_name}/status/{post_id}"
+        if channel_name.startswith("@"):
+            name_without_sign = channel_name.strip('@')
+        return f"https://x.com/{name_without_sign}/status/{post_id}"
     else:
         return "not working may you written comment twice"

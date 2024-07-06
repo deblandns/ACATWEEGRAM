@@ -159,7 +159,8 @@ async def setting_gmail(update: Update, context: CallbackContext) -> None:
     # Add logic to handle Gmail setting
     user_gmail_name = update.message.text
     if "@" not in user_gmail_name or ".com" not in user_gmail_name or "gmail" not in user_gmail_name:
-        await context.bot.send_message(update.effective_user.id, "you don`t entered email with '@' or .com or 'gmail' please write you email exactly like youremail@gmail.com replace youremail with your email name")
+        await context.bot.send_message(update.effective_user.id,
+                                       "you don`t entered email with '@' or .com or 'gmail' please write you email exactly like youremail@gmail.com replace youremail with your email name")
     else:
         # todo: add gmail to database
         user_id = update.effective_user.id
@@ -230,11 +231,16 @@ async def get_user_tweets():
         else:
             try:
                 # if data is not equal it mean there are new post so it will send comment and change the row data
-                tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
+                tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}',
+                                                       channel_name=user_name)
                 comment_post_date_time = datetime.datetime.now()
+                print(comment_post_date_time)
                 # make instance of sql functions and save data below it
-                #todo: use upsert instead of update in here
-                sql_update_instance = SqlFunctions(tweet_channel=f'{channel_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f'{tweet_link}', comment_post_datetime=f'{comment_post_date_time}')
+                # todo: use upsert instead of update in here
+                sql_update_instance = SqlFunctions(tweet_channel=f'{channel_name}', tweet_id=f'{tweet_id}',
+                                                   tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}',
+                                                   tweet_link=f'{tweet_link}',
+                                                   comment_post_datetime=f'{comment_post_date_time}')
                 save_data = sql_update_instance.update_data_or_insert()
                 # in this section we will run command to send message to all admins about this happening
 
@@ -263,11 +269,16 @@ date & time: {comment_post_date_time}
 """, disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
                 # if user in it`s setting turn email sending true we can send user notification from email also
                 if id[2]:
-                    user_email_sending_of_tweets_data(user_name=f"{id[1]}", channel_name=f"{channel_name}", email=f"{id[3]}", random_comment_text=f"{random_comment_text}", tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
+                    user_email_sending_of_tweets_data(user_name=f"{id[1]}", channel_name=f"{channel_name}",
+                                                      email=f"{id[3]}", random_comment_text=f"{random_comment_text}",
+                                                      tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
                     if user_email_sending_of_tweets_data:
-                        await bot.send_message(chat_id=f"{id[0]}", text=f"we`ve sent you the email address because you gave us that permission 📧", disable_web_page_preview=True)
+                        await bot.send_message(chat_id=f"{id[0]}",
+                                               text=f"we`ve sent you the email address because you gave us that permission 📧",
+                                               disable_web_page_preview=True)
                     else:
-                        await bot.send_message(chat_id=f"{id[0]}", text=f"we can`t send you email notification that`s may because you ent us wrong email address")
+                        await bot.send_message(chat_id=f"{id[0]}",
+                                               text=f"we can`t send you email notification that`s may because you ent us wrong email address")
                 else:
                     pass
             except:
@@ -286,7 +297,6 @@ async def run_forever():
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     loop.run_until_complete(run_forever())
-
 
 # Create the application and pass it your bot's token
 app = ApplicationBuilder().token(Telegram_config.token).build()
