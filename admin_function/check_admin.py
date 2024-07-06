@@ -16,7 +16,7 @@ class AdminClass:
         this function will get user data from self.user_id then response with True or False
         :return:bool
         """
-        get_admin_data_sql_command: sql = f'SELECT * FROM ADMIN WHERE telegram_id={self.user_id}'
+        get_admin_data_sql_command: sql = f"SELECT * FROM ADMIN WHERE telegram_id = '{self.user_id}' "
         admin_data = cursor.execute(get_admin_data_sql_command)
         for user in admin_data:
             admin_id = user[1]
