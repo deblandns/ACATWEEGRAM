@@ -8,9 +8,8 @@ cursor = connect.cursor()
 
 def change_gmail(id, gmail):
     try:
-        command = f''
+        command = f"UPDATE ADMIN SET email = '{gmail}', send_email = TRUE WHERE telegram_id = '{id}' "
         execute = cursor.execute(command)
-        print(execute)
         connect.commit()
         return True
     except:
