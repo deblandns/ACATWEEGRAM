@@ -12,7 +12,6 @@ class AdminSql:
     def send_all_admin_ids(self):
         admin_ids = cursor.execute("SELECT telegram_id, name, send_email, email FROM ADMIN")
         data = admin_ids.fetchall()
-        connect.close()
         return data
 
 

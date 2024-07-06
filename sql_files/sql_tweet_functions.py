@@ -1,5 +1,8 @@
 import datetime
+import sqlite3
 import sqlite3 as sql
+import traceback
+import sys
 
 # connect database to project
 connect = sql.connect('acatweegram.db')
@@ -26,7 +29,6 @@ class SqlFunctions:
         self.tweet_title = tweet_title
         self.used_comment = used_comment
         self.tweet_link = tweet_link
-        self.comment_post_datetime = comment_post_datetime
 
     # this function will check new posts and last posts that we checked and if they are different in id it will return True else it will return false
     def Is_tweet_data_equal(self) -> bool:
@@ -46,9 +48,15 @@ class SqlFunctions:
 
     def update_data_or_insert(self) -> bool:
         try:
-            command = f"UPDATE tweet_data SET tweet_id = '{self.tweet_id}', tweet_title = '{self.tweet_title}', used_comment = '{self.used_comment}', tweet_link = '{self.tweet_link}', comment_post_datetime = '{self.comment_post_datetime}' WHERE tweet_channel = '{self.tweet_channel}' "
+            comment_post_datetime = datetime.datetime.now()
+            command = f"UPDATE tweet_data SET tweet_id = '{self.tweet_id}', tweet_title = '{self.tweet_title}', used_comment = '{self.used_comment}', tweet_link = '{self.tweet_link}' WHERE tweet_channel = '{self.tweet_channel}' "
             cursor.execute(command)
             connect.commit()
             return True
-        except:
+        except sqlite3.Error as er:
+            print('SQLite error: %s' % (' '.join(er.args)))
+            print("Exception class is: ", er.__class__)
+            print('SQLite traceback: ')
+            exc_type, exc_value, exc_tb = sys.exc_info()
+            print(traceback.format_exception(exc_type, exc_value, exc_tb))
             return False

@@ -8,13 +8,14 @@ url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
 def send_comment(text: str, post_id: str, channel_name: str) -> str:
     """
     add text you want to send as comment and post id you want to send image to
-    :param text:
-    :param post_id:
-    :return:
+    the channel name that we are going to send message to :param channel_name:
+    the text that we are going to send to tweet :param text:
+    the post id that we are going to reply comment under it:param post_id:
+    this will return link of webpage else it will return false :return:
     """
     # this is cookies when you want to run it on the web and save data on client you can use cookies
     cookies = {
-        'auth_token': 'cb8d5b1dfd8bbc3d24e320d27d5bb7d16daf747a	',
+        'auth_token': 'cb8d5b1dfd8bbc3d24e320d27d5bb7d16daf747a',
         'ct0': 'eb90627d601692cdfcb158c076e98efd5e1088a7e15d8eb4892f19b35f742a452f2688b7443f2ea70d4fa9c76bb32139748b1d2d20eb609b513ba946a2fd427469523815c77a2a594208dbe994e931db',
         'd_prefs': 'MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw',
         'des_opt_in': 'Y',
@@ -35,10 +36,10 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
         'Authorization': 'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
         'Content-Length': '1429',
         'Content-Type': 'application/json',
-        'Cookie': 'guest_id=v1%3A171960450287103314; night_mode=2; g_state={"i_l":0}; kdt=waQ6GPWydTaiN6EyVAOSlyuxWa9KOkW9dKZFDCLj; auth_token=cb8d5b1dfd8bbc3d24e320d27d5bb7d16daf747a; ct0=eb90627d601692cdfcb158c076e98efd5e1088a7e15d8eb4892f19b35f742a452f2688b7443f2ea70d4fa9c76bb32139748b1d2d20eb609b513ba946a2fd427469523815c77a2a594208dbe994e931db; twid=u%3D1806779267663138816; dnt=1; des_opt_in=Y; lang=en; d_prefs=MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw',
+        'Cookie': 'guest_id=v1%3A171960450287103314; night_mode=2; kdt=waQ6GPWydTaiN6EyVAOSlyuxWa9KOkW9dKZFDCLj; auth_token=cb8d5b1dfd8bbc3d24e320d27d5bb7d16daf747a; ct0=eb90627d601692cdfcb158c076e98efd5e1088a7e15d8eb4892f19b35f742a452f2688b7443f2ea70d4fa9c76bb32139748b1d2d20eb609b513ba946a2fd427469523815c77a2a594208dbe994e931db; twid=u%3D1806779267663138816; dnt=1; lang=en; d_prefs=MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw',
         'Origin': 'https://x.com',
         'Priority': 'u=1, i',
-        'Referer': 'https://x.com/Entekhab_News/status/1807503799730475279',
+        'Referer': f'https://x.com/{channel_name}/status/{post_id}',
         'Sec-Ch-Ua': 'Not/A)Brand";v="8", "Chromium";v="126", "Brave";v="126',
         'Sec-Ch-Ua-Mobile': '?0',
         'Sec-Ch-Ua-Platform': 'Windows',
@@ -47,7 +48,7 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
         'Sec-Fetch-Site': 'same-origin',
         'Sec-Gpc': '1',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
-        'X-Client-Transaction-Id': 'LGMU4QtSPztDRAoMCSrJ5DQKkYVlkx7VKS6EM3lcLaOzUauDe1a5b8y89KW1IcA4tSt0Hi5KFnWeb4B3epBPtf04KCTMLw',
+        'X-Client-Transaction-Id': 'YHdba0QQbC7CcLYKwMHUoX/3NCVaux71+PsQPbBSKTShYXRfyXotdAwHIyBAQtuyosnNWWL8e9cm90rnxG3eRo+DJ+aTYw',
         'X-Client-Uuid': 'f3b1fe3f-3883-49f2-bc6d-9e09a347ccb7',
         'X-Csrf-Token': 'eb90627d601692cdfcb158c076e98efd5e1088a7e15d8eb4892f19b35f742a452f2688b7443f2ea70d4fa9c76bb32139748b1d2d20eb609b513ba946a2fd427469523815c77a2a594208dbe994e931db',
         'X-Twitter-Active-User': 'yes',
@@ -86,10 +87,9 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
 
     # print data to visualize everything we get
     print(data.status_code)
+    print(data.json())
     # this will return post link
     if data.status_code == 200:
-        if channel_name.startswith("@"):
-            name_without_sign = channel_name.strip('@')
-        return f"https://x.com/{name_without_sign}/status/{post_id}"
+        return f"https://x.com/{channel_name}/status/{post_id}"
     else:
         return "not working may you written comment twice"

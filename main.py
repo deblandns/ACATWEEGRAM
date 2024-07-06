@@ -217,10 +217,7 @@ async def get_user_tweets():
         tweet_title = data['results'][0]['text']
         channel_name = data['results'][0]['user']['username']
         random_comment_text = random_comment()
-        print(f"random_comment_result {random_comment_text}")
-
         # in here we will get instance of class sql function and then check the new tweet then run functions
-        print(f"this is user name of loop {user_name}")
         # there are instance of sql function to run method of inside it
         check_data_equality = SqlFunctions(tweet_channel=f'{user_name}', tweet_id=f'{tweet_id}')
         is_equal = check_data_equality.Is_tweet_data_equal()
@@ -231,16 +228,13 @@ async def get_user_tweets():
         else:
             try:
                 # if data is not equal it mean there are new post so it will send comment and change the row data
-                tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}',
-                                                       channel_name=user_name)
+                tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
                 comment_post_date_time = datetime.datetime.now()
-                print(comment_post_date_time)
                 # make instance of sql functions and save data below it
                 # todo: use upsert instead of update in here
-                sql_update_instance = SqlFunctions(tweet_channel=f'{channel_name}', tweet_id=f'{tweet_id}',
+                sql_update_instance = SqlFunctions(tweet_channel=f'@{channel_name}', tweet_id=f'{tweet_id}',
                                                    tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}',
-                                                   tweet_link=f'{tweet_link}',
-                                                   comment_post_datetime=f'{comment_post_date_time}')
+                                                   tweet_link=f'{tweet_link}')
                 save_data = sql_update_instance.update_data_or_insert()
                 # in this section we will run command to send message to all admins about this happening
 
@@ -248,7 +242,6 @@ async def get_user_tweets():
                 sql_admin_instance = AdminSql()
                 data = sql_admin_instance.send_all_admin_ids()
                 if save_data:
-                    print(f"new row updated from {channel_name} and new dataset has been added")
                     logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
                 else:
                     logging.debug(msg=f"there is problem with adding data to database")
