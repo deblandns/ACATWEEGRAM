@@ -234,8 +234,17 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
     query = update.callback_query
     await query.answer()
     if query.data == "want_notification":
-        email_sending_on_instance = change_get_notification_gmail.EmailSendingStatus(update.effective_user.id)
-        sending_email_turn_on = email_sending_on_instance.TurnEmailSendingOn()
+        # this function will turn email sending notification status on
+        # turn email sending on
+        async def TurnEmailSendingOn(user_id):
+            try:
+                turn_on_command = f"UPDATE ADMIN SET send_email = TRUE WHERE telegram_id = '{user_id}' "
+                cursor.execute(turn_on_command)
+                connect.commit()
+                return True
+            except:
+                return False
+        sending_email_turn_on = await TurnEmailSendingOn(update.effective_user.id)
         if sending_email_turn_on:
             await context.bot.send_message(update.effective_user.id, f"now you email sending is on and we can send you report message from email")
         else:
