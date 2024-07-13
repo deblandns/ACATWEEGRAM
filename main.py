@@ -169,9 +169,18 @@ these are now list data = {list_for_delete}
 async def add_channel(update: Update, context: CallbackContext) -> None:
     channel_name = update.message.text
     if channel_name.startswith('@'):
-        print(channel_name)
-        instance_of_show_and_insert = SqlShowAndInsert(channel_name)
-        instance_of_show_and_insert.Insert_channel()
+        # insert function below can insert channels that user send to us
+        async def Insert_channel(channel_name):
+            try:
+                command = f"INSERT INTO tweet_data(tweet_channel) VALUES ('{channel_name}')"
+                run_insertion = cursor.execute(command)
+                connect.commit()
+                return True
+            except:
+                return False
+
+        insert_data_to_channel = await Insert_channel(channel_name)
+
         # Process the channel name (e.g., store it, start monitoring it, etc.)
         await context.bot.send_message(update.effective_user.id,
                                        f"Channel '{channel_name}' has been added and will be monitored.")
