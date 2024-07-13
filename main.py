@@ -1,12 +1,10 @@
 import asyncio
 import logging
 from datetime import datetime
-
 import tweepy
 import requests as re
 from telegram import *
 from telegram.ext import *
-
 from comments.comments import random_comment
 from database.add_channel import *
 from database.remove_channel import *
@@ -15,7 +13,6 @@ from config import Telegram_config, Accounts
 from database.sql_admin_functions import AdminSql
 from database.sql_tweet_functions import SqlFunctions
 from settings import add_gmail_to_database, change_get_notification_gmail
-from admin_function.check_admin import AdminClass
 from tweet_functions import comment_post
 from utilities.email_sender import user_email_sending_of_tweets_data
 
@@ -77,7 +74,6 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
             return False
 
     admin_check = await check_admin(user_id)
-    print(admin_check)
     keyboards = [[
         KeyboardButton(text=f"set gmail 📨")], [KeyboardButton(text=f"Email notify 📬 status")],
         [KeyboardButton(f'🟢 add your desire channel'), KeyboardButton(f"🔴 delete Channel")]
@@ -92,8 +88,6 @@ Hi Admin 🧨 if you want to add channel to get data from and auto comment click
 """, reply_markup=reply_keyboards)
     else:
         await context.bot.send_message(update.effective_user.id, f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
-
-
 # endregion
 
 
@@ -112,8 +106,17 @@ send us your email address for example: 👉 youremail@gmail.com
         keyboards = [[InlineKeyboardButton('yes 🟢', callback_data='want_notification')],
                      [InlineKeyboardButton('no 🔴', callback_data="don`t_want_notification")]]
         inline_notification_keyboards = InlineKeyboardMarkup(keyboards)
-        instance_of_email_status = change_get_notification_gmail.EmailSendingStatus(user_id=update.effective_user.id)
-        data = instance_of_email_status.CheckDataStatus()
+
+        # check now data
+        async def CheckDataStatus(user_id: str):
+            try:
+                command = f"SELECT * FROM ADMIN WHERE telegram_id = '{user_id}' "
+                user_data = cursor.execute(command)
+                datas = user_data.fetchall()
+                return datas
+            except:
+                return False
+        data = await CheckDataStatus(str(update.effective_user.id))
         if data:
             pass
         else:
