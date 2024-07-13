@@ -193,7 +193,14 @@ async def add_channel(update: Update, context: CallbackContext) -> None:
 async def delete_channel(update: Update, context: CallbackContext) -> None:
     channel_name = update.message.text
     # Add logic to delete the channel from monitoring
-    remove_status = remove_channel(channel_name)
+    async def remove_channel(channel_name: str) -> bool:
+        try:
+            command = f"DELETE FROM tweet_data WHERE tweet_channel = '{channel_name}' "
+            cursor.execute(command)
+            connect.commit()
+        except:
+            return False
+    remove_status = await remove_channel(channel_name)
     await context.bot.send_message(update.effective_user.id, f"Channel '{channel_name}' has been deleted.")
     return ConversationHandler.END
 
@@ -202,11 +209,18 @@ async def setting_gmail(update: Update, context: CallbackContext) -> None:
     # Add logic to handle Gmail setting
     user_gmail_name = update.message.text
     if "@" not in user_gmail_name or ".com" not in user_gmail_name or "gmail" not in user_gmail_name:
-        await context.bot.send_message(update.effective_user.id,
-                                       "you don`t entered email with '@' or .com or 'gmail' please write you email exactly like youremail@gmail.com replace youremail with your email name")
+        await context.bot.send_message(update.effective_user.id,"you don`t entered email with '@' or .com or 'gmail' please write you email exactly like youremail@gmail.com replace youremail with your email name")
     else:
         user_id = update.effective_user.id
-        is_added = add_gmail_to_database.change_gmail(user_id, user_gmail_name)
+        async def change_gmail(id, gmail):
+            try:
+                command = f"UPDATE ADMIN SET email = '{gmail}', send_email = TRUE WHERE telegram_id = '{id}' "
+                execute = cursor.execute(command)
+                connect.commit()
+                return True
+            except:
+                return False
+        is_added = await change_gmail(user_id, user_gmail_name)
         if is_added:
             await bot.send_message(update.effective_user.id, f"your email inserted or changed and we turned email sending on you can turn it off in Email notify 📬 status")
         else:
