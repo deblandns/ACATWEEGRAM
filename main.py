@@ -116,6 +116,7 @@ send us your email address for example: 👉 youremail@gmail.com
                 return datas
             except:
                 return False
+
         data = await CheckDataStatus(str(update.effective_user.id))
         if data:
             pass
@@ -129,8 +130,13 @@ send us your email address for example: 👉 youremail@gmail.com
 
     # you can add your desire tweeter user channel to get data from and automatically send comment
     elif "🟢 add your desire channel" in update.message.text:
-        instance_of_channels = SqlShowAndInsert()
-        data = instance_of_channels.check_database()
+        # this sql function will show reservoired channels
+        async def check_database():
+            command = f"SELECT tweet_channel FROM tweet_data"
+            sql_run = cursor.execute(command)
+            fetch = sql_run.fetchall()
+            return fetch
+        data = await check_database()
         list = []
         for da in data:
             list.append(da)
@@ -142,8 +148,13 @@ now_channels = {list}
 
     # you can delete your desire channel to prevent sending comment and data
     elif "🔴 delete Channel" in update.message.text:
-        instance_of_channels = SqlShowAndInsert()
-        datas = instance_of_channels.check_database()
+        # this function will show the channels which are ready to deleter
+        async def check_database():
+            command = f"SELECT tweet_channel FROM tweet_data"
+            sql_run = cursor.execute(command)
+            fetch = sql_run.fetchall()
+            return fetch
+        datas = await check_database()
         list_for_delete = []
         for data in datas:
             list_for_delete.append(data)
