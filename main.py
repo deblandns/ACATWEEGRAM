@@ -1,25 +1,23 @@
-import logging
-import sqlite3 as sql
-import time
-import telegram
 import asyncio
+import logging
+from datetime import datetime
+
 import tweepy
-import datetime
 import requests as re
 from telegram import *
 from telegram.ext import *
-from sql_files.sql_tweet_functions import *
-from sql_files.sql_admin_functions import *
-from sql_files.add_channel import *
-from sql_files.remove_channel import *
+
+from comments.comments import random_comment
+from database.add_channel import *
+from database.remove_channel import *
 from tweepy import *
-from comments.comments import *
-from tweepy.asynchronous import *
 from config import Telegram_config, Accounts
-from utilities.email_sender import *
+from database.sql_admin_functions import AdminSql
+from database.sql_tweet_functions import SqlFunctions
 from settings import add_gmail_to_database, change_get_notification_gmail
-from tweet_functions import comment_post
 from admin_function.check_admin import AdminClass
+from tweet_functions import comment_post
+from utilities.email_sender import user_email_sending_of_tweets_data
 
 # the api keys and registration inputs
 consumer_key = 'Lrg6mlBu9KMRHwx9C3X0dCiAb'
@@ -32,7 +30,7 @@ bearer_api = "AAAAAAAAAAAAAAAAAAAAALhDugEAAAAAUwaPIWAJJFzIG00CZjaLMR8wahg%3DJ9Nc
 logging.basicConfig(level=logging.INFO)
 
 # config database
-connect = sql.connect('acatweegram.db')
+connect = sql.connect('database/acatweegram.db')
 cursor = connect.cursor()
 
 # bot is the main api handler for all sources
@@ -48,8 +46,7 @@ auth.set_access_token(access_token, access_token_secret)
 api = tweepy.API(auth)
 
 # this is client and it use to authenticate with v2
-client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token,
-                access_token_secret=access_token_secret)
+client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_token_secret=access_token_secret)
 
 # region start
 
@@ -62,24 +59,39 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this variable will get the user id then we will check whether is admin or not
     user_id = update.effective_user.id
     # region check_admin class
-    # this class will find out if user is admin or not then response with True or False
-    admin_check_instance = AdminClass(user_id)
-    admin_check_response = admin_check_instance.check_admin()
+
+    # check_admin this function name check admin will check the admin and then response True or False base on user_id
+    async def check_admin(user_id: int) -> bool:
+        """
+        this function will get user data from self.user_id then response with True or False
+        :return:bool
+        """
+        get_admin_data_sql_command: sql = f"SELECT * FROM ADMIN WHERE telegram_id = '{user_id}' "
+        admin_data = cursor.execute(get_admin_data_sql_command)
+        for user in admin_data:
+            admin_id = user[0]
+            if admin_id == str(user_id):
+                return True
+                return
+        else:
+            return False
+
+    admin_check = await check_admin(user_id)
+    print(admin_check)
     keyboards = [[
         KeyboardButton(text=f"set gmail 📨")], [KeyboardButton(text=f"Email notify 📬 status")],
         [KeyboardButton(f'🟢 add your desire channel'), KeyboardButton(f"🔴 delete Channel")]
     ]
     reply_keyboards = ReplyKeyboardMarkup(keyboards, resize_keyboard=True)
     # endregion check admin class
-    if admin_check_response:
+    if admin_check:
         await context.bot.send_message(update.effective_user.id, f"""\
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
 🔴 if you want to delete channel click on delete_channel
 ⚙ if you want to set gmail to get response from or change you data click on settings
 """, reply_markup=reply_keyboards)
     else:
-        await context.bot.send_message(update.effective_user.id,
-                                       f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
+        await context.bot.send_message(update.effective_user.id, f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
 
 
 # endregion
@@ -207,7 +219,7 @@ async def cancel(update: Update, context: CallbackContext) -> None:
     await update.message.reply_text('Operation cancelled.')
     return ConversationHandler.END
 
-
+#
 # async def get_user_tweets():
 #     for user_name, user_id in zip(Accounts.accounts, Accounts.accounts_id_ordered):
 #         url = "https://twitter154.p.rapidapi.com/user/tweets"

@@ -2,7 +2,7 @@ import sqlite3 as sql
 # in this section we will add function which it can remove channel from our database and list
 
 # this function will remove the channel user give us
-connect = sql.connect("acatweegram.db")
+connect = sql.connect("database/acatweegram.db")
 
 cursor = connect.cursor()
 

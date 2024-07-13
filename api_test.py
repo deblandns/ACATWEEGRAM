@@ -1,4 +1,4 @@
-from sql_files import sql_tweet_functions
+from database import sql_tweet_functions
 from datetime import datetime
 
 date_and_time = datetime.now()

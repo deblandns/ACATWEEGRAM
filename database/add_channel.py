@@ -1,7 +1,7 @@
 # in this section we will represent codes that allow us to create new channel to get response from
 import sqlite3 as sql
 
-connect = sql.connect('acatweegram.db')
+connect = sql.connect('database/acatweegram.db')
 
 cursor = connect.cursor()
 

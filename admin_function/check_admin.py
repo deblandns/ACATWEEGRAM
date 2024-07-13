@@ -1,7 +1,7 @@
 import sqlite3 as sql
 
 # config database to this file
-connect = sql.connect('acatweegram.db')
+connect = sql.connect('database/acatweegram.db')
 cursor = connect.cursor()
 
 

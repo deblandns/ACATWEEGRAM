@@ -5,7 +5,7 @@ import traceback
 import sys
 
 # connect database to project
-connect = sql.connect('acatweegram.db')
+connect = sql.connect('database/acatweegram.db')
 
 # set cursor to implement our target sql commands
 cursor = connect.cursor()
