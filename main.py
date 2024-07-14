@@ -43,9 +43,6 @@ client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret, acce
 
 # region start
 
-# Define the conversation states
-ADDING_CHANNEL, DELETING_CHANNEL, SETTING_GMAIL = range(3)
-
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
 async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this variable will get the user id then we will check whether is admin or not
@@ -129,6 +126,38 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
             add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
             send us channel name starting with '@' for example: 👉 @example""", reply_markup=rep_cancell_btn)
+
+    if 'setting ⚙' in update.message.text:
+        # add last step
+        async def update_last_step(userid):
+            try:
+                insert_last_step = cursor.execute(
+                    f"UPDATE ADMIN SET last_stp = 'setting' WHERE telegram_id = '{userid}' ")
+                connect.commit()
+                return True
+            except:
+                return False
+
+        last_step_update = await update_last_step(str(update.effective_user.id))
+        # todo: add condition if user don`t have email let user to add email and if user has email let user to hesitate if want to get email notification or not
+        async def check_user_email(user_id):
+            command = cursor.execute(f"SELECT email FROM ADMIN WHERE telegram_id = '{user_id}' ")
+            email_data = cursor.fetchall()
+            for data in email_data:
+                return data[0]
+        email = await check_user_email(update.effective_user.id)
+        if email:
+            inline_keyboards = [[InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")], [InlineKeyboardButton(text=f"notification On 🔔", callback_data=f"notification_turn_on"), InlineKeyboardButton(text=f"notification Off 🔕", callback_data=f"notification_off")], [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+            reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
+            await bot.send_message(update.effective_user.id, f"""
+this is your email: {email}
+do you want to change it or change the notification sending status
+            """, reply_markup=reply_keyboard_markup)
+        else:
+            add_email_inline_keyboard = [[InlineKeyboardButton(text=f"add email 📩", callback_data=f"add_email")], [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+            reply_inline_keyboards = InlineKeyboardMarkup(add_email_inline_keyboard)
+            await bot.send_message(chat_id=update.effective_user.id, text=f"please enter your email it must have '@' sign and end with '.com'", reply_markup=reply_inline_keyboards)
+
 
 
     if "Email notify 📬 status" in update.message.text:
@@ -236,7 +265,7 @@ async def delete_channel(update: Update, context: CallbackContext) -> None:
     return ConversationHandler.END
 
 
-async def setting_gmail(update: Update, context: CallbackContext) -> None:
+async def set_gmail(update: Update, context: CallbackContext) -> None:
     # Add logic to handle Gmail setting
     user_gmail_name = update.message.text
     if "@" not in user_gmail_name or ".com" not in user_gmail_name or "gmail" not in user_gmail_name:
