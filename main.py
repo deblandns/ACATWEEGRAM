@@ -1,18 +1,14 @@
 import asyncio
 import logging
-from datetime import datetime
 import tweepy
+import sqlite3 as sql
 import requests as re
+from datetime import datetime
 from telegram import *
 from telegram.ext import *
 from comments.comments import random_comment
-from database.add_channel import *
-from database.remove_channel import *
 from tweepy import *
 from config import Telegram_config, Accounts
-from database.sql_admin_functions import AdminSql
-from database.sql_tweet_functions import SqlFunctions
-from settings import add_gmail_to_database, change_get_notification_gmail
 from tweet_functions import comment_post
 from utilities.email_sender import user_email_sending_of_tweets_data
 
@@ -50,13 +46,22 @@ client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret, acce
 # Define the conversation states
 ADDING_CHANNEL, DELETING_CHANNEL, SETTING_GMAIL = range(3)
 
-
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
 async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this variable will get the user id then we will check whether is admin or not
     user_id = update.effective_user.id
     # region check_admin class
 
+    # add last step
+    async def update_last_step(userid):
+        try:
+            insert_last_step = cursor.execute(f"UPDATE ADMIN SET last_stp = 'start_command' WHERE telegram_id = '{userid}' ")
+            connect.commit()
+            return True
+        except:
+            return False
+
+    last_step_update = await update_last_step(str(update.effective_user.id))
     # check_admin this function name check admin will check the admin and then response True or False base on user_id
     async def check_admin(user_id: int) -> bool:
         """
@@ -75,16 +80,14 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
 
     admin_check = await check_admin(user_id)
     keyboards = [[
-        KeyboardButton(text=f"set gmail 📨")], [KeyboardButton(text=f"Email notify 📬 status")],
-        [KeyboardButton(f'🟢 add your desire channel'), KeyboardButton(f"🔴 delete Channel")]
+        KeyboardButton(text=f"add channel 🌐")], [KeyboardButton(f'setting ⚙')]
     ]
     reply_keyboards = ReplyKeyboardMarkup(keyboards, resize_keyboard=True)
     # endregion check admin class
     if admin_check:
         await context.bot.send_message(update.effective_user.id, f"""\
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-🔴 if you want to delete channel click on delete_channel
-⚙ if you want to set gmail to get response from or change you data click on settings
+⚙ if you want to set gmail to get response from or change your data click on settings
 """, reply_markup=reply_keyboards)
     else:
         await context.bot.send_message(update.effective_user.id, f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
@@ -94,13 +97,30 @@ Hi Admin 🧨 if you want to add channel to get data from and auto comment click
 # region message_handler
 # message the admin that we`ve found new post on Twitter
 async def message_admin(update: Update, context: CallbackContext) -> None:
+    # todo: add code to check database first then implement code
     # in this section when user click on setting we will send two options like inline keyboards and after that if you send any data it will get
-    if "set gmail 📨" in update.message.text:
+    if "add channel 🌐" in update.message.text:
+        # add last step
+        async def update_last_step(userid):
+            try:
+                insert_last_step = cursor.execute(
+                    f"UPDATE ADMIN SET last_stp = 'add_channel' WHERE telegram_id = '{userid}' ")
+                connect.commit()
+                return True
+            except:
+                return False
+
+        last_step_update = await update_last_step(str(update.effective_user.id))
+        # get all channels inside the database
+        run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
+        datas = run_get_channel.fetchall()
+        glassy_inline_keyboard_channels = [[], [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+        for data in datas:
+            glassy_inline_keyboard_channels[0].append(InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+        inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
         # send message to page
-        await context.bot.send_message(update.effective_user.id, f"""
-send us your email address for example: 👉 youremail@gmail.com
- """)
-        return SETTING_GMAIL
+        add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
+send us channel name starting with '@' for example: 👉 @example """, reply_markup=inline_keyboard)
 
     if "Email notify 📬 status" in update.message.text:
         keyboards = [[InlineKeyboardButton('yes 🟢', callback_data='want_notification')],
@@ -162,6 +182,8 @@ now_channels = {list}
 if you want to delete channel that you added please insert the name below \n\n
 these are now list data = {list_for_delete}
         """)
+        for channel_name in list_for_delete:
+            print(channel_name[0])
         return DELETING_CHANNEL
 
 
@@ -265,162 +287,158 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         else:
             await context.bot.send_message(update.effective_user.id,
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
-
-
-# Fallback handler in case of an unexpected input
-async def cancel(update: Update, context: CallbackContext) -> None:
-    await update.message.reply_text('Operation cancelled.')
-    return ConversationHandler.END
-
-
-async def get_user_tweets():
-    for user_name, user_id in zip(Accounts.accounts, Accounts.accounts_id_ordered):
-        url = "https://twitter154.p.rapidapi.com/user/tweets"
-
-        # parameters that we need to call url with
-        querystring = {
-            "username": user_name,
-            "limit": "1",
-            "user_id": user_id,
-            "include_replies": False,
-            "include_pinned": False
-        }
-
-        headers = {
-            "x-rapidapi-key": "cb55117503mshb4d680ddb2c3067p1364dejsn60b23ba912e6",
-            "x-rapidapi-host": "twitter154.p.rapidapi.com"
-        }
-
-        # # send request by get method and get response
-        response = re.get(url, headers=headers, params=querystring)
-
-        # get and extract data from response
-        data = response.json()
-        tweet_id = data['results'][0]['tweet_id']
-        tweet_title = data['results'][0]['text']
-        channel_name = data['results'][0]['user']['username']
-        random_comment_text = random_comment()
-        # in here we will get instance of class sql function and then check the new tweet then run functions
-
-
-        # this function will check new posts and last posts that we checked and if they are different in id it will return True else it will return false
-        async def Is_tweet_data_equal(tweet_channel, tweet_id) -> bool:
-            """
-            just pass the parameters of class and get instance of the class the call this function it`ll automatically return true or false to check new data
-            this is tweet id to check is tweet new or not:param tweet_id:
-            we need tweet channel to check which channel posted it :param tweet_channel:
-            """
-            # this variable will run sql command and get tweet_id number from tweet_data database based on channel name
-            get_all_data_equal_to_tweet_channel = cursor.execute(f"SELECT tweet_id FROM tweet_data WHERE tweet_channel = '{tweet_channel}' ")
-            tweet_sql_id = get_all_data_equal_to_tweet_channel.fetchall()[0][0]
-            if tweet_sql_id == tweet_id:
-                return True
-            else:
-                return False
-        is_equal = await Is_tweet_data_equal(f"{user_name}", f"{tweet_id}")
-
-        # this function will get inputs and save them or update them and then send comment
-        if is_equal:
-            print('data are equal')
-            pass
-        else:
+    if query.data == 'cancell':
+        # add last step
+        async def update_last_step(userid):
             try:
-                # if data is not equal it mean there are new post so it will send comment and change the row data
-                tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
-                comment_post_date_time = datetime.datetime.now()
-
-                # this function will update or insert data when is necessary and check the new dataset
-                async def update_data_or_insert(tweet_channel, tweet_id, tweet_title, used_comment, tweet_link) -> bool:
-                    try:
-                        comment_post_datetime = datetime.datetime.now()
-                        command = f"UPDATE tweet_data SET tweet_id = '{tweet_id}', tweet_title = '{tweet_title}', used_comment = '{used_comment}', tweet_link = '{tweet_link}' WHERE tweet_channel = '{tweet_channel}' "
-                        cursor.execute(command)
-                        connect.commit()
-                        return True
-                    except sqlite3.Error as er:
-                        print('SQLite error: %s' % (' '.join(er.args)))
-                        print("Exception class is: ", er.__class__)
-                        print('SQLite traceback: ')
-                        exc_type, exc_value, exc_tb = sys.exc_info()
-                        print(traceback.format_exception(exc_type, exc_value, exc_tb))
-                        return False
-
-                save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=f'{tweet_id}',
-                                                   tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}',
-                                                   tweet_link=f'{tweet_link}')
-                async def send_all_admin_ids():
-                    admin_ids = cursor.execute("SELECT telegram_id, name, send_email, email FROM ADMIN")
-                    data = admin_ids.fetchall()
-                    return data
-
-                data = await send_all_admin_ids()
-
-                if save_data:
-                    logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
-                else:
-                    logging.debug(msg=f"there is problem with adding data to database")
-                keyboards = [
-                    [InlineKeyboardButton('go to tweet page 🔗', url=tweet_link)],
-                ]
-                reply_markup_keyboard = InlineKeyboardMarkup(keyboards, )
-                for id in data:
-                    await bot.send_message(chat_id=f"{id[0]}", text=f"""
-Hi user: {id[1]} 🌟
-I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
-                \n
-to channel: {user_name}
-
-and tweet id was: 🔢 {tweet_id}
-\n
-date & time: {comment_post_date_time}
-""", disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
-                # if user in it`s setting turn email sending true we can send user notification from email also
-                if id[2]:
-                    user_email_sending_of_tweets_data(user_name=f"{id[1]}", channel_name=f"{channel_name}",
-                                                      email=f"{id[3]}", random_comment_text=f"{random_comment_text}",
-                                                      tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
-                    if user_email_sending_of_tweets_data:
-                        await bot.send_message(chat_id=f"{id[0]}",
-                                               text=f"we`ve sent you the email address because you gave us that permission 📧",
-                                               disable_web_page_preview=True)
-                    else:
-                        await bot.send_message(chat_id=f"{id[0]}",
-                                               text=f"we can`t send you email notification that`s may because you ent us wrong email address")
-                else:
-                    pass
+                insert_last_step = cursor.execute(
+                    f"UPDATE ADMIN SET last_stp = 'homepage' WHERE telegram_id = '{userid}' ")
+                connect.commit()
+                return True
             except:
-                logging.error(msg='can`t send message may it`s repetitive')
+                return False
+        last_step_update = await update_last_step(str(update.effective_user.id))
+        if last_step_update:
+            await bot.send_message(update.effective_user.id, f"process cancelled")
 
-
-async def run_forever():
-    while True:
-        await get_user_tweets()
-        await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
-
-
-# this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
-# after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
-# because my it block our bot and our services
-if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_forever())
+# async def get_user_tweets():
+#     for user_name, user_id in zip(Accounts.accounts, Accounts.accounts_id_ordered):
+#         url = "https://twitter154.p.rapidapi.com/user/tweets"
+#
+#         # parameters that we need to call url with
+#         querystring = {
+#             "username": user_name,
+#             "limit": "1",
+#             "user_id": user_id,
+#             "include_replies": False,
+#             "include_pinned": False
+#         }
+#
+#         headers = {
+#             "x-rapidapi-key": "cb55117503mshb4d680ddb2c3067p1364dejsn60b23ba912e6",
+#             "x-rapidapi-host": "twitter154.p.rapidapi.com"
+#         }
+#
+#         # # send request by get method and get response
+#         response = re.get(url, headers=headers, params=querystring)
+#
+#         # get and extract data from response
+#         data = response.json()
+#         tweet_id = data['results'][0]['tweet_id']
+#         tweet_title = data['results'][0]['text']
+#         channel_name = data['results'][0]['user']['username']
+#         random_comment_text = random_comment()
+#         # in here we will get instance of class sql function and then check the new tweet then run functions
+#
+#
+#         # this function will check new posts and last posts that we checked and if they are different in id it will return True else it will return false
+#         async def Is_tweet_data_equal(tweet_channel, tweet_id) -> bool:
+#             """
+#             just pass the parameters of class and get instance of the class the call this function it`ll automatically return true or false to check new data
+#             this is tweet id to check is tweet new or not:param tweet_id:
+#             we need tweet channel to check which channel posted it :param tweet_channel:
+#             """
+#             # this variable will run sql command and get tweet_id number from tweet_data database based on channel name
+#             get_all_data_equal_to_tweet_channel = cursor.execute(f"SELECT tweet_id FROM tweet_data WHERE tweet_channel = '{tweet_channel}' ")
+#             tweet_sql_id = get_all_data_equal_to_tweet_channel.fetchall()[0][0]
+#             if tweet_sql_id == tweet_id:
+#                 return True
+#             else:
+#                 return False
+#         is_equal = await Is_tweet_data_equal(f"{user_name}", f"{tweet_id}")
+#
+#         # this function will get inputs and save them or update them and then send comment
+#         if is_equal:
+#             print('data are equal')
+#             pass
+#         else:
+#             try:
+#                 # if data is not equal it mean there are new post so it will send comment and change the row data
+#                 tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
+#                 comment_post_date_time = datetime.datetime.now()
+#
+#                 # this function will update or insert data when is necessary and check the new dataset
+#                 async def update_data_or_insert(tweet_channel, tweet_id, tweet_title, used_comment, tweet_link) -> bool:
+#                     try:
+#                         comment_post_datetime = datetime.datetime.now()
+#                         command = f"UPDATE tweet_data SET tweet_id = '{tweet_id}', tweet_title = '{tweet_title}', used_comment = '{used_comment}', tweet_link = '{tweet_link}' WHERE tweet_channel = '{tweet_channel}' "
+#                         cursor.execute(command)
+#                         connect.commit()
+#                         return True
+#                     except sqlite3.Error as er:
+#                         print('SQLite error: %s' % (' '.join(er.args)))
+#                         print("Exception class is: ", er.__class__)
+#                         print('SQLite traceback: ')
+#                         exc_type, exc_value, exc_tb = sys.exc_info()
+#                         print(traceback.format_exception(exc_type, exc_value, exc_tb))
+#                         return False
+#
+#                 save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=f'{tweet_id}',
+#                                                    tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}',
+#                                                    tweet_link=f'{tweet_link}')
+#                 async def send_all_admin_ids():
+#                     admin_ids = cursor.execute("SELECT telegram_id, name, send_email, email FROM ADMIN")
+#                     data = admin_ids.fetchall()
+#                     return data
+#
+#                 data = await send_all_admin_ids()
+#
+#                 if save_data:
+#                     logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
+#                 else:
+#                     logging.debug(msg=f"there is problem with adding data to database")
+#                 keyboards = [
+#                     [InlineKeyboardButton('go to tweet page 🔗', url=tweet_link)],
+#                 ]
+#                 reply_markup_keyboard = InlineKeyboardMarkup(keyboards, )
+#                 for id in data:
+#                     await bot.send_message(chat_id=f"{id[0]}", text=f"""
+# Hi user: {id[1]} 🌟
+# I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
+#                 \n
+# to channel: {user_name}
+#
+# and tweet id was: 🔢 {tweet_id}
+# \n
+# date & time: {comment_post_date_time}
+# """, disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
+#                 # if user in it`s setting turn email sending true we can send user notification from email also
+#                 if id[2]:
+#                     user_email_sending_of_tweets_data(user_name=f"{id[1]}", channel_name=f"{channel_name}",
+#                                                       email=f"{id[3]}", random_comment_text=f"{random_comment_text}",
+#                                                       tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
+#                     if user_email_sending_of_tweets_data:
+#                         await bot.send_message(chat_id=f"{id[0]}",
+#                                                text=f"we`ve sent you the email address because you gave us that permission 📧",
+#                                                disable_web_page_preview=True)
+#                     else:
+#                         await bot.send_message(chat_id=f"{id[0]}",
+#                                                text=f"we can`t send you email notification that`s may because you ent us wrong email address")
+#                 else:
+#                     pass
+#             except:
+#                 logging.error(msg='can`t send message may it`s repetitive')
+#
+#
+# async def run_forever():
+#     while True:
+#         await get_user_tweets()
+#         await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
+#
+#
+# # this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
+# # after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
+# # because my it block our bot and our services
+# if __name__ == "__main__":
+#     loop = asyncio.get_event_loop()
+#     loop.run_until_complete(run_forever())
 
 # Create the application and pass it your bot's token
 app = ApplicationBuilder().token(Telegram_config.token).build()
 
-# Define the conversation handler with the states
-conv_handler = ConversationHandler(
-    entry_points=[CommandHandler('start', start), MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin)],
-    states={
-        ADDING_CHANNEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_channel)],
-        DELETING_CHANNEL: [MessageHandler(filters.TEXT & ~filters.COMMAND, delete_channel)],
-        SETTING_GMAIL: [MessageHandler(filters.TEXT & ~filters.COMMAND, setting_gmail)],
-        # todo: add seperated condition for setting gmail and change notify method for each section that we want
-    },
-    fallbacks=[CommandHandler('cancel', cancel)]
-)
+app.add_handler(CommandHandler('start', start))
+app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
 app.add_handler(CallbackQueryHandler(call_back_notifications))
-app.add_handler(conv_handler)
 
 # Start the async task to fetch tweets
 if app.run_polling:
