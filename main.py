@@ -115,12 +115,19 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
         run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
         datas = run_get_channel.fetchall()
         glassy_inline_keyboard_channels = [[], [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
-        for data in datas:
-            glassy_inline_keyboard_channels[0].append(InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
-        inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
-        # send message to page
-        add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
-send us channel name starting with '@' for example: 👉 @example """, reply_markup=inline_keyboard)
+        if datas:
+            for data in datas:
+                glassy_inline_keyboard_channels[0].append(
+                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+            inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
+            # send message to page if database have channel
+            add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
+            send us channel name starting with '@' for example: 👉 @example""", reply_markup=inline_keyboard)
+        else:
+            # send message to page if database have channel
+            add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
+            send us channel name starting with '@' for example: 👉 @example""")
+
 
     if "Email notify 📬 status" in update.message.text:
         keyboards = [[InlineKeyboardButton('yes 🟢', callback_data='want_notification')],
