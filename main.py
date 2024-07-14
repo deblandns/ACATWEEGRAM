@@ -124,9 +124,11 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
             send us channel name starting with '@' for example: 👉 @example""", reply_markup=inline_keyboard)
         else:
-            # send message to page if database have channel
+            # send message to page if database has no channel
+            cancell_button = [[InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+            rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
             add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
-            send us channel name starting with '@' for example: 👉 @example""")
+            send us channel name starting with '@' for example: 👉 @example""", reply_markup=rep_cancell_btn)
 
 
     if "Email notify 📬 status" in update.message.text:
