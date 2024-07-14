@@ -15,14 +15,14 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
     """
     # this is cookies when you want to run it on the web and save data on client you can use cookies
     cookies = {
-        'auth_token': 'cb8d5b1dfd8bbc3d24e320d27d5bb7d16daf747a',
-        'ct0': 'eb90627d601692cdfcb158c076e98efd5e1088a7e15d8eb4892f19b35f742a452f2688b7443f2ea70d4fa9c76bb32139748b1d2d20eb609b513ba946a2fd427469523815c77a2a594208dbe994e931db',
+        'auth_token': 'ac02ad63410fdcb83f8b3993f9d2f9582018f120',
+        'ct0': 'cb0580831790827912a0cf7ad1ae2a6c8a1135aebc340ca60eca18f06f7a28fd654f70585aa3675f8890de9eae0565b7f287243fab23937370979db26007bf14ebe118ca83e2ef86d9fa1e22e12fb304',
         'd_prefs': 'MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw',
         'des_opt_in': 'Y',
         'dnt': '1',
         'g_state': '{"i_l":0}',
-        "guest_id": 'v1%3A171960450287103314',
-        'kdt': 'waQ6GPWydTaiN6EyVAOSlyuxWa9KOkW9dKZFDCLj',
+        "guest_id": 'v1%3A172091662864390487',
+        'kdt': 'gJHUeGHPIok2rwBLt0h6aTuzJjWN8BpSatvvSqPQ',
         'lang': 'en',
         'night_mode': '2',
         'twid': 'u%3D1806779267663138816'

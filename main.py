@@ -328,15 +328,33 @@ async def get_user_tweets():
                 # if data is not equal it mean there are new post so it will send comment and change the row data
                 tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
                 comment_post_date_time = datetime.datetime.now()
-                # make instance of sql functions and save data below it
-                # todo: use upsert instead of update in here
-                sql_update_instance = SqlFunctions(tweet_channel=f'@{channel_name}', tweet_id=f'{tweet_id}', tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}', tweet_link=f'{tweet_link}')
-                save_data = sql_update_instance.update_data_or_insert()
-                # in this section we will run command to send message to all admins about this happening
 
-                # this is instance of function that for each id inside admin table it will send message
-                sql_admin_instance = AdminSql()
-                data = sql_admin_instance.send_all_admin_ids()
+                # this function will update or insert data when is necessary and check the new dataset
+                async def update_data_or_insert(tweet_channel, tweet_id, tweet_title, used_comment, tweet_link) -> bool:
+                    try:
+                        comment_post_datetime = datetime.datetime.now()
+                        command = f"UPDATE tweet_data SET tweet_id = '{tweet_id}', tweet_title = '{tweet_title}', used_comment = '{used_comment}', tweet_link = '{tweet_link}' WHERE tweet_channel = '{tweet_channel}' "
+                        cursor.execute(command)
+                        connect.commit()
+                        return True
+                    except sqlite3.Error as er:
+                        print('SQLite error: %s' % (' '.join(er.args)))
+                        print("Exception class is: ", er.__class__)
+                        print('SQLite traceback: ')
+                        exc_type, exc_value, exc_tb = sys.exc_info()
+                        print(traceback.format_exception(exc_type, exc_value, exc_tb))
+                        return False
+
+                save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=f'{tweet_id}',
+                                                   tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}',
+                                                   tweet_link=f'{tweet_link}')
+                async def send_all_admin_ids():
+                    admin_ids = cursor.execute("SELECT telegram_id, name, send_email, email FROM ADMIN")
+                    data = admin_ids.fetchall()
+                    return data
+
+                data = await send_all_admin_ids()
+
                 if save_data:
                     logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
                 else:
