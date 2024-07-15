@@ -95,6 +95,17 @@ Hi Admin 🧨 if you want to add channel to get data from and auto comment click
 # message the admin that we`ve found new post on Twitter
 async def message_admin(update: Update, context: CallbackContext) -> None:
     # todo: add code to check database first then implement code
+    # todo: then add code to see wheter the input is prepared command or it`s email then validate it
+    message_recieve = update.message.text
+    if message_recieve:
+        async def check_last_step(user_id):
+            last_step = cursor.execute(f"SELECT last_stp FROM ADMIN WHERE telegram_id = '{user_id}' ")
+            last_stp_fetch = last_step.fetchall()
+            for data in last_stp_fetch:
+                print(data[0])
+        user_last_stp_check = await check_last_step(update.effective_user.id)
+
+
     # in this section when user click on setting we will send two options like inline keyboards and after that if you send any data it will get
     if "add channel 🌐" in update.message.text:
         # add last step
@@ -114,12 +125,13 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
         glassy_inline_keyboard_channels = [[], [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
         if datas:
             for data in datas:
-                glassy_inline_keyboard_channels[0].append(
-                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                glassy_inline_keyboard_channels[0].append(InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
             inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
+
             # send message to page if database have channel
             add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
             send us channel name starting with '@' for example: 👉 @example""", reply_markup=inline_keyboard)
+            print(add_channel_message['message_id'])
         else:
             # send message to page if database has no channel
             cancell_button = [[InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
@@ -339,6 +351,41 @@ f"your email notification sending status is on you can get notified 🔔")
             await context.bot.send_message(update.effective_user.id,f"email notification sending status is muted 🔇")
         else:
             await context.bot.send_message(update.effective_user.id,f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
+
+    if query.data == 'change_email':
+        # in there we will change the last step to identify user status
+        async def change_email_status(userid) -> bool:
+            try:
+                email_ch = cursor.execute(f"UPDATE ADMIN SET last_stp = 'change_email' WHERE telegram_id = '{userid}' ")
+                connect.commit()
+                return True
+            except:
+                return False
+
+        edit_email = await change_email_status(update.effective_user.id)
+        if edit_email:
+            await bot.send_message(chat_id=update.effective_user.id, text=f"now insert new email you want to enter \n note: ⚡ it must has '@' sign and end up with '.com' ")
+        else:
+            await bot.send_message(chat_id=update.effective_user.id, text=f"problem occured code 404")
+
+    if query.data == 'add_email':
+        async def add_email_status(userid) -> bool:
+            try:
+                email_ch = cursor.execute(f"UPDATE ADMIN SET last_stp = 'add_email' WHERE telegram_id = '{userid}' ")
+                connect.commit()
+                return True
+            except:
+                return False
+
+        add_email = await add_email_status(update.effective_user.id)
+        if add_email:
+            await bot.send_message(chat_id=update.effective_user.id,
+                                   text=f"now insert  email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ")
+        else:
+            await bot.send_message(chat_id=update.effective_user.id, text=f"problem occured code 404")
+
+
+
 
 # async def get_user_tweets():
 #     for user_name, user_id in zip(Accounts.accounts, Accounts.accounts_id_ordered):
