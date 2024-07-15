@@ -114,8 +114,6 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             # make last_stp data seperated and set it
             command_split = user_last_stp_check.split('#')[0]  # this will get the command before message id
             message_id_split = user_last_stp_check.split('#')[1]  # this will get the message id we sent to user
-            print(command_split)
-            print(message_id_split)
             if command_split == 'add_channel':
                 async def channel_validate(channel_name):
                     regex = r'@[a-zA-Z0-9.-]'
@@ -192,11 +190,44 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     await bot.editMessageText(text=f"please enter the right format of email example: \n\n youremail@gmail.com", chat_id=update.effective_user.id, message_id=message_id_split)
                     time.sleep(7)
                     await bot.editMessageText(text=f"please enter you email address", chat_id=update.effective_user.id, message_id=message_id_split)
-
             if command_split == 'add_email':
-                print("it was add email")
+                # validation of input
+                async def email_validation(email):
+                    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                    if re.match(regex, email):
+                        return True
+                    else:
+                        return False
+                # check the validation
+                email_validation_var = await email_validation(update.message.text)
+                if email_validation_var:
+                    # add email to database of user
+                    async def add_email(id, gmail):
+                        try:
+                            command = f"UPDATE ADMIN SET email = '{gmail}', send_email = TRUE, send_email = TRUE WHERE telegram_id = '{id}' "
+                            execute = cursor.execute(command)
+                            connect.commit()
+                            return True
+                        except:
+                            return False
+
+                    is_added = await add_email(update.effective_user.id, update.message.text)
+                    if is_added:
+                        inline_keyboards = [
+                            [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
+                            [InlineKeyboardButton(
+                                text=f"Turn Notification Off 🔕",
+                                callback_data=f"notification_off")],
+                            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
+                        ]
+                        reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
+                        await bot.editMessageText(text=f"email name: {update.message.text} has been added", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=reply_keyboard_markup)
+                else:
+                    await bot.editMessageText(text=f"your entered wrong email the correct format is 'youremail@gmail.com'\n note: email must have '@' sign and end up with '.com' or other suffixes ", chat_id=update.effective_user.id, message_id=message_id_split)
+                    time.sleep(10)
+                    await bot.editMessageText(text=f"please enter your email address again", chat_id=update.effective_user.id, message_id=message_id_split)
             if command_split == 'start_command':
-                print('it was start command')
+                await bot.send_message(chat_id=update.effective_user.id, text=f"please click on one of the buttons you want to work with")
             if command_split == 'homepage':
                 pass
         except:
