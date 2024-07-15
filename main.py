@@ -1,11 +1,12 @@
 import logging
 import sqlite3 as sql
+import time
 
 import tweepy
 from telegram import *
 from telegram.ext import *
 from tweepy import *
-
+import regex as re
 from config import Telegram_config
 
 # the api keys and registration inputs
@@ -116,7 +117,55 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             print(command_split)
             print(message_id_split)
             if command_split == 'add_channel':
-                print('this is add_channel')
+                async def channel_validate(channel_name):
+                    regex = r'@[a-zA-Z0-9.-]'
+                    if re.match(regex, channel_name):
+                        return True
+                    else:
+                        return False
+                channel_validation = await channel_validate(update.message.text)
+
+                if channel_validation:
+                    # insert function below can insert channels that user send to us
+                    async def Insert_channel(channel_name):
+                        try:
+                            command = f"INSERT INTO tweet_data(tweet_channel) VALUES ('{channel_name}')"
+                            run_insertion = cursor.execute(command)
+                            connect.commit()
+                            return True
+                        except:
+                            return False
+                    insert_data_to_channel = await Insert_channel(update.message.text)
+                    if insert_data_to_channel:
+                        # get all channels inside the database
+                        run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
+                        datas = run_get_channel.fetchall()
+                        glassy_inline_keyboard_channels = [[], [
+                            InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                        if datas:
+                            for data in datas:
+                                glassy_inline_keyboard_channels[0].append(
+                                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                            inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
+                        await bot.editMessageText(text=f"channel name : {update.message.text} has been added to database ✅", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=inline_keyboards)
+                else:
+                    # this section will edit message and say the issue then change the keys
+                    await bot.editMessageText(text=f"you entered channel in the wrong format it must be like this @example \n note it must start with '@' sign", chat_id=update.effective_user.id, message_id=message_id_split)
+                    time.sleep(10)
+                    # get all channels inside the database
+                    run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
+                    datas = run_get_channel.fetchall()
+                    glassy_inline_keyboard_channels = [[], [
+                        InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                    if datas:
+                        for data in datas:
+                            glassy_inline_keyboard_channels[0].append(
+                                InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                        inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
+                    await bot.editMessageText(text=f"please insert channel that you want to auto comment on it",
+                                              chat_id=update.effective_user.id, message_id=message_id_split,
+                                              reply_markup=inline_keyboards)
+
             if command_split == 'setting':
                 print('this is setting')
             if command_split == 'change_email':
