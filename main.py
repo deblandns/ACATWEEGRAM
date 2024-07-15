@@ -105,9 +105,31 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             last_step = cursor.execute(f"SELECT last_stp FROM ADMIN WHERE telegram_id = '{user_id}' ")
             last_stp_fetch = last_step.fetchall()
             for data in last_stp_fetch:
-                print(data[0])
+                return data[0]
 
         user_last_stp_check = await check_last_step(update.effective_user.id)
+
+        try:
+            # make last_stp data seperated and set it
+            command_split = user_last_stp_check.split('#')[0]  # this will get the command before message id
+            message_id_split = user_last_stp_check.split('#')[1]  # this will get the message id we sent to user
+            print(command_split)
+            print(message_id_split)
+            if command_split == 'add_channel':
+                print('this is add_channel')
+            if command_split == 'setting':
+                print('this is setting')
+            if command_split == 'change_email':
+                print("it was change email")
+            if command_split == 'add_email':
+                print("it was add email")
+            if command_split == 'start_command':
+                print('it was start command')
+            if command_split == 'homepage':
+                pass
+        except:
+            command = user_last_stp_check
+            print(command)
 
     if "Email notify 📬 status" in update.message.text:
         keyboards = [[InlineKeyboardButton('yes 🟢', callback_data='want_notification')],
@@ -249,6 +271,20 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
     query = update.callback_query
     await query.answer()
     if query.data == 'cancell':
+        # check the current state
+        async def check_last_step(user_id):
+            last_step = cursor.execute(f"SELECT last_stp FROM ADMIN WHERE telegram_id = '{user_id}' ")
+            last_stp_fetch = last_step.fetchall()
+            for data in last_stp_fetch:
+                return data[0]
+
+        user_last_stp_check = await check_last_step(update.effective_user.id)
+        try:
+            before_hashtag = user_last_stp_check.split('#')[0]
+            after_hashtag = user_last_stp_check.split('#')[1]
+        except:
+            without_hashtag = user_last_stp_check
+
         # add last step
         async def update_last_step(userid):
             try:
@@ -260,8 +296,40 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 return False
 
         last_step_update = await update_last_step(str(update.effective_user.id))
-        if last_step_update:
-            await bot.send_message(update.effective_user.id, f"process cancelled")
+
+        if before_hashtag == 'add_channel':
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')], [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
+            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.editMessageText(
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                chat_id=update.effective_user.id,
+                message_id=after_hashtag,
+                reply_markup=reply_keyboards)
+
+        if before_hashtag == 'setting':
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')], [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
+            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.editMessageText(
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                chat_id=update.effective_user.id,
+                message_id=after_hashtag,
+                reply_markup=reply_keyboards)
+
+        if before_hashtag == 'change_email':
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
+            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.editMessageText(
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
+
+        if before_hashtag == 'add_email':
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
+            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.editMessageText(
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
     if query.data == 'notification_turn_on':
         async def change_notification_status(userid):
