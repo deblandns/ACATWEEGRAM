@@ -121,6 +121,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         return True
                     else:
                         return False
+
                 channel_validation = await channel_validate(update.message.text)
 
                 if channel_validation:
@@ -133,6 +134,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                             return True
                         except:
                             return False
+
                     insert_data_to_channel = await Insert_channel(update.message.text)
                     if insert_data_to_channel:
                         # get all channels inside the database
@@ -145,10 +147,15 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                                 glassy_inline_keyboard_channels[0].append(
                                     InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
                             inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
-                        await bot.editMessageText(text=f"channel name : {update.message.text} has been added to database ✅", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=inline_keyboards)
+                        await bot.editMessageText(
+                            text=f"channel name : {update.message.text} has been added to database ✅",
+                            chat_id=update.effective_user.id, message_id=message_id_split,
+                            reply_markup=inline_keyboards)
                 else:
                     # this section will edit message and say the issue then change the keys
-                    await bot.editMessageText(text=f"wrong format it must be like this @example \n note it must start with '@' sign", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await bot.editMessageText(
+                        text=f"wrong format it must be like this @example \n note it must start with '@' sign",
+                        chat_id=update.effective_user.id, message_id=message_id_split)
                     time.sleep(8)
                     # get all channels inside the database
                     run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
@@ -172,6 +179,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         return True
                     else:
                         return False
+
                 email_validation_var = await email_validation(update.message.text)
                 if email_validation_var:
                     async def change_gmail(id, gmail):
@@ -185,11 +193,15 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
 
                     is_added = await change_gmail(update.effective_user.id, update.message.text)
                     if is_added:
-                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤", chat_id=update.effective_user.id, message_id=message_id_split)
+                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤",
+                                                  chat_id=update.effective_user.id, message_id=message_id_split)
                 else:
-                    await bot.editMessageText(text=f"please enter the right format of email example: \n\n youremail@gmail.com", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await bot.editMessageText(
+                        text=f"please enter the right format of email example: \n\n youremail@gmail.com",
+                        chat_id=update.effective_user.id, message_id=message_id_split)
                     time.sleep(7)
-                    await bot.editMessageText(text=f"please enter you email address", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await bot.editMessageText(text=f"please enter you email address", chat_id=update.effective_user.id,
+                                              message_id=message_id_split)
             if command_split == 'add_email':
                 # validation of input
                 async def email_validation(email):
@@ -198,6 +210,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         return True
                     else:
                         return False
+
                 # check the validation
                 email_validation_var = await email_validation(update.message.text)
                 if email_validation_var:
@@ -221,158 +234,75 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                             [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
                         ]
                         reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
-                        await bot.editMessageText(text=f"email name: {update.message.text} has been added", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=reply_keyboard_markup)
+                        await bot.editMessageText(text=f"email name: {update.message.text} has been added",
+                                                  chat_id=update.effective_user.id, message_id=message_id_split,
+                                                  reply_markup=reply_keyboard_markup)
                 else:
-                    await bot.editMessageText(text=f"your entered wrong email the correct format is 'youremail@gmail.com'\n note: email must have '@' sign and end up with '.com' or other suffixes ", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await bot.editMessageText(
+                        text=f"your entered wrong email the correct format is 'youremail@gmail.com'\n note: email must have '@' sign and end up with '.com' or other suffixes ",
+                        chat_id=update.effective_user.id, message_id=message_id_split)
                     time.sleep(10)
-                    await bot.editMessageText(text=f"please enter your email address again", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await bot.editMessageText(text=f"please enter your email address again",
+                                              chat_id=update.effective_user.id, message_id=message_id_split)
             if command_split == 'start_command':
-                await bot.send_message(chat_id=update.effective_user.id, text=f"please click on one of the buttons you want to work with")
+                await bot.send_message(chat_id=update.effective_user.id,
+                                       text=f"please click on one of the buttons you want to work with")
             if command_split == 'homepage':
                 pass
         except:
             command = user_last_stp_check
             print(command)
 
-    if "Email notify 📬 status" in update.message.text:
-        keyboards = [[InlineKeyboardButton('yes 🟢', callback_data='want_notification')],
-                     [InlineKeyboardButton('no 🔴', callback_data="don`t_want_notification")]]
-        inline_notification_keyboards = InlineKeyboardMarkup(keyboards)
-
-        # check now data
-        async def CheckDataStatus(user_id: str):
-            try:
-                command = f"SELECT * FROM ADMIN WHERE telegram_id = '{user_id}' "
-                user_data = cursor.execute(command)
-                datas = user_data.fetchall()
-                return datas
-            except:
-                return False
-
-        data = await CheckDataStatus(str(update.effective_user.id))
-        if data:
-            pass
-        else:
-            await bot.send_message(chat_id=update.effective_user.id,
-                                   text=f"maybe you are not admin or you don`t have any data please contact this email : hoseinnysyan1385@gmail.com")
-        await context.bot.send_message(update.effective_user.id, f"""
-        if you want to get email notification click on yes 🔔 \n\n if you don`t want to get the notification click on no 🔕
-        \n
-{'🟩   your email sending status is on we can send you report from email' if data[0][2] == 1 else '🔴   your email sending status is off we don`t send you report from email'}
-        """, reply_markup=inline_notification_keyboards)
-
-    # you can add your desire tweeter user channel to get data from and automatically send comment
-    elif "🟢 add your desire channel" in update.message.text:
-        # this sql function will show reservoired channels
-        async def check_database():
-            command = f"SELECT tweet_channel FROM tweet_data"
-            sql_run = cursor.execute(command)
-            fetch = sql_run.fetchall()
-            return fetch
-
-        data = await check_database()
-        list = []
-        for da in data:
-            list.append(da)
-        await context.bot.send_message(update.effective_user.id, f"""
-if you want to add channel to check it also you have to add name of channel starting with "@" so please leave channel name\n\n
-now_channels = {list}
-        """)
-
-    # you can delete your desire channel to prevent sending comment and data
-    elif "🔴 delete Channel" in update.message.text:
-        # this function will show the channels which are ready to deleter
-        async def check_database():
-            command = f"SELECT tweet_channel FROM tweet_data"
-            sql_run = cursor.execute(command)
-            fetch = sql_run.fetchall()
-            return fetch
-
-        datas = await check_database()
-        list_for_delete = []
-        for data in datas:
-            list_for_delete.append(data)
-        await context.bot.send_message(update.effective_user.id, f"""
-if you want to delete channel that you added please insert the name below \n\n
-these are now list data = {list_for_delete}
-        """)
-        for channel_name in list_for_delete:
-            print(channel_name[0])
-
-
-# Handlers for conversation states
-async def add_channel(update: Update, context: CallbackContext) -> None:
-    channel_name = update.message.text
-    if channel_name.startswith('@'):
-        # insert function below can insert channels that user send to us
-        async def Insert_channel(channel_name):
-            try:
-                command = f"INSERT INTO tweet_data(tweet_channel) VALUES ('{channel_name}')"
-                run_insertion = cursor.execute(command)
-                connect.commit()
-                return True
-            except:
-                return False
-
-        insert_data_to_channel = await Insert_channel(channel_name)
-
-        # Process the channel name (e.g., store it, start monitoring it, etc.)
-        await context.bot.send_message(update.effective_user.id,
-                                       f"Channel '{channel_name}' has been added and will be monitored.")
-    else:
-        await context.bot.send_message(update.effective_user.id,
-                                       "Please provide a valid channel name starting with '@'")
-    return ConversationHandler.END
-
-
-async def delete_channel(update: Update, context: CallbackContext) -> None:
-    channel_name = update.message.text
-
-    # Add logic to delete the channel from monitoring
-    async def remove_channel(channel_name: str) -> bool:
-        try:
-            command = f"DELETE FROM tweet_data WHERE tweet_channel = '{channel_name}' "
-            cursor.execute(command)
-            connect.commit()
-        except:
-            return False
-
-    remove_status = await remove_channel(channel_name)
-    await context.bot.send_message(update.effective_user.id, f"Channel '{channel_name}' has been deleted.")
-    return ConversationHandler.END
-
-
-async def set_gmail(update: Update, context: CallbackContext) -> None:
-    # Add logic to handle Gmail setting
-    user_gmail_name = update.message.text
-    if "@" not in user_gmail_name or ".com" not in user_gmail_name or "gmail" not in user_gmail_name:
-        await context.bot.send_message(update.effective_user.id,
-                                       "you don`t entered email with '@' or .com or 'gmail' please write you email exactly like youremail@gmail.com replace youremail with your email name")
-    else:
-        user_id = update.effective_user.id
-
-        async def change_gmail(id, gmail):
-            try:
-                command = f"UPDATE ADMIN SET email = '{gmail}', send_email = TRUE WHERE telegram_id = '{id}' "
-                execute = cursor.execute(command)
-                connect.commit()
-                return True
-            except:
-                return False
-
-        is_added = await change_gmail(user_id, user_gmail_name)
-        if is_added:
-            await bot.send_message(update.effective_user.id,
-                                   f"your email inserted or changed and we turned email sending on you can turn it off in Email notify 📬 status")
-        else:
-            await bot.send_message(update.effective_user.id, f"there is problem to set your email to database")
-        return
-    return ConversationHandler.END
-
 
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     await query.answer()
+    # check the query to validate whether if query_data is channel name if it`s channel name we will remove it from database
+    if query.data:
+        # check the query.data if it`s channel or not
+        async def channel_validate(channel_name):
+            regex = r'@[a-zA-Z0-9.-]'
+            if re.match(regex, channel_name):
+                return True
+            else:
+                return False
+
+        channel_validation = await channel_validate(query.data)
+        if channel_validation:
+            # Add logic to delete the channel from monitoring
+            async def remove_channel(channel_name: str) -> bool:
+                try:
+                    command = f"DELETE FROM tweet_data WHERE tweet_channel = '{channel_name}' "
+                    cursor.execute(command)
+                    connect.commit()
+                    return True
+                except:
+                    return False
+
+            remove_status = await remove_channel(query.data)
+            if remove_status:
+                # get last step inside database
+                async def check_last_step(user_id):
+                    last_step = cursor.execute(f"SELECT last_stp FROM ADMIN WHERE telegram_id = '{user_id}' ")
+                    last_stp_fetch = last_step.fetchall()
+                    for data in last_stp_fetch:
+                        return data[0]
+                # in here we will get last step id to edit message
+                user_last_stp_check = await check_last_step(update.effective_user.id)
+                last_step_message_id = user_last_stp_check.split('#')[1]
+                # edit last message after delete
+                # get all channels inside the database
+                run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
+                datas = run_get_channel.fetchall()
+                glassy_inline_keyboard_channels = [[], [
+                    InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                if datas:
+                    for data in datas:
+                        glassy_inline_keyboard_channels[0].append(
+                            InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                    inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
+                await bot.editMessageText(text=f"channel name: {query.data} deleted ⭕", chat_id=update.effective_user.id, message_id=last_step_message_id, reply_markup=inline_keyboards)
+
     if query.data == 'cancell':
         # check the current state
         async def check_last_step(user_id):
@@ -401,7 +331,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         last_step_update = await update_last_step(str(update.effective_user.id))
 
         if before_hashtag == 'add_channel':
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')], [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
                 text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
@@ -410,7 +341,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 reply_markup=reply_keyboards)
 
         if before_hashtag == 'setting':
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')], [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')]]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
                 text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
@@ -445,7 +377,6 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         user_last_stp_check = await check_last_step(update.effective_user.id)
 
         last_stp_message_id = user_last_stp_check.split("#")[1]
-        print(f'this is last_stp_message_id: {last_stp_message_id}')
 
         async def change_notification_status(userid):
             try:
@@ -465,7 +396,9 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         ]
         reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_on:
-            await context.bot.editMessageText(text=f"now you can get notified via email 🔔", chat_id=update.effective_user.id, message_id=last_stp_message_id, reply_markup=reply_keyboard_markup)
+            await context.bot.editMessageText(text=f"now you can get notified via email 🔔",
+                                              chat_id=update.effective_user.id, message_id=last_stp_message_id,
+                                              reply_markup=reply_keyboard_markup)
         else:
             await context.bot.send_message(update.effective_user.id,
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
@@ -501,7 +434,9 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         ]
         reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_off:
-            await context.bot.editMessageText(text=f"now your notification sending status is off 🔕", chat_id=update.effective_user.id, message_id=last_stp_message_id, reply_markup=reply_keyboard_markup)
+            await context.bot.editMessageText(text=f"now your notification sending status is off 🔕",
+                                              chat_id=update.effective_user.id, message_id=last_stp_message_id,
+                                              reply_markup=reply_keyboard_markup)
         else:
             await context.bot.send_message(update.effective_user.id,
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
@@ -517,7 +452,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             except:
                 return False
 
-        edit_email_message = await bot.send_message(chat_id=update.effective_user.id, text=f"insert your new email address 📨")
+        edit_email_message = await bot.send_message(chat_id=update.effective_user.id,
+                                                    text=f"insert your new email address 📨")
         edit_email = await change_email_status(update.effective_user.id, edit_email_message['message_id'])
 
     if query.data == 'add_email':
@@ -530,7 +466,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             except:
                 return False
 
-        add_email_message = await bot.send_message(chat_id=update.effective_user.id, text=f"now insert  email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ")
+        add_email_message = await bot.send_message(chat_id=update.effective_user.id,
+                                                   text=f"now insert  email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ")
         add_email = await add_email_status(update.effective_user.id, add_email_message['message_id'])
 
     if query.data == 'add-channel-start-key':
@@ -584,12 +521,13 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 return data
 
         email = await check_user_email(update.effective_user.id)
-        print(email[1])
         if email[0]:
             inline_keyboards = [
-                                [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
-                                [InlineKeyboardButton(text=f"{'Turn notification On 🔔' if email[1] == 0 else 'Turn notification Off 🔕' }", callback_data=f"{'notification_turn_on' if email[1] == 0 else 'notification_off'}")],
-                                [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
+                [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
+                [InlineKeyboardButton(
+                    text=f"{'Turn notification On 🔔' if email[1] == 0 else 'Turn notification Off 🔕'}",
+                    callback_data=f"{'notification_turn_on' if email[1] == 0 else 'notification_off'}")],
+                [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
             ]
             reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
             message_with_email = await bot.send_message(update.effective_user.id, f"""
