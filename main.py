@@ -149,7 +149,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                 else:
                     # this section will edit message and say the issue then change the keys
                     await bot.editMessageText(text=f"wrong format it must be like this @example \n note it must start with '@' sign", chat_id=update.effective_user.id, message_id=message_id_split)
-                    time.sleep(10)
+                    time.sleep(8)
                     # get all channels inside the database
                     run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
                     datas = run_get_channel.fetchall()
