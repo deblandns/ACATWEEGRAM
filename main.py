@@ -139,7 +139,8 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                 return False
 
         last_step_update = await update_last_step(str(update.effective_user.id))
-        # todo: add condition if user don`t have email let user to add email and if user has email let user to hesitate if want to get email notification or not
+
+        # in this section we check user email wheter user have email inside database or not
         async def check_user_email(user_id):
             command = cursor.execute(f"SELECT email FROM ADMIN WHERE telegram_id = '{user_id}' ")
             email_data = cursor.fetchall()
@@ -338,6 +339,38 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         last_step_update = await update_last_step(str(update.effective_user.id))
         if last_step_update:
             await bot.send_message(update.effective_user.id, f"process cancelled")
+
+    if query.data == 'notification_turn_on':
+        async def change_notification_status(userid):
+            try:
+                turn_on_command = f"UPDATE ADMIN SET send_email = TRUE WHERE telegram_id = '{userid}' "
+                cursor.execute(turn_on_command)
+                connect.commit()
+                return True
+            except:
+                return False
+
+        sending_email_turn_on = await change_notification_status(update.effective_user.id)
+        if sending_email_turn_on:
+            await context.bot.send_message(update.effective_user.id,
+f"your email notification sending status is on you can get notified 🔔")
+        else:
+            await context.bot.send_message(update.effective_user.id,f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
+
+    if query.data == 'notification_off':
+        async def TurnOffEmailSending(userid):
+            try:
+                turn_on_command = f"UPDATE ADMIN SET send_email = FALSE WHERE telegram_id = '{userid}' "
+                cursor.execute(turn_on_command)
+                connect.commit()
+                return True
+            except:
+                return False
+        sending_email_turn_off = await TurnOffEmailSending(update.effective_user.id)
+        if sending_email_turn_off:
+            await context.bot.send_message(update.effective_user.id,f"email notification sending status is muted 🔇")
+        else:
+            await context.bot.send_message(update.effective_user.id,f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
 
 # async def get_user_tweets():
 #     for user_name, user_id in zip(Accounts.accounts, Accounts.accounts_id_ordered):
