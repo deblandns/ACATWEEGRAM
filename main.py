@@ -49,20 +49,17 @@ client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret, acce
 async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this variable will get the user id then we will check whether is admin or not
     user_id = update.effective_user.id
-
     # region check_admin class
 
     # add last step
-    async def update_last_step(userid):
+    async def update_last_step(userid, message_id):
         try:
             insert_last_step = cursor.execute(
-                f"UPDATE ADMIN SET last_stp = 'start_command' WHERE telegram_id = '{userid}' ")
+                f"UPDATE ADMIN SET last_stp = 'start_command#{message_id}' WHERE telegram_id = '{userid}' ")
             connect.commit()
             return True
         except:
             return False
-
-    last_step_update = await update_last_step(str(update.effective_user.id))
 
     # check_admin this function name check admin will check the admin and then response True or False base on user_id
     async def check_admin(user_id: int) -> bool:
@@ -86,10 +83,11 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     inline_keyboards = InlineKeyboardMarkup(keyboards)
     # endregion check admin class
     if admin_check:
-        await context.bot.send_message(update.effective_user.id, f"""\
+        admin_greet_message = await context.bot.send_message(update.effective_user.id, f"""\
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
 ⚙ if you want to set gmail to get response from or change your data click on settings
 """, reply_markup=inline_keyboards)
+        last_step_update = await update_last_step(str(user_id), admin_greet_message['message_id'])
     else:
         await context.bot.send_message(update.effective_user.id,
                                        f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧")
