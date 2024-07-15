@@ -150,7 +150,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         await bot.editMessageText(text=f"channel name : {update.message.text} has been added to database ✅", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=inline_keyboards)
                 else:
                     # this section will edit message and say the issue then change the keys
-                    await bot.editMessageText(text=f"you entered channel in the wrong format it must be like this @example \n note it must start with '@' sign", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await bot.editMessageText(text=f"wrong format it must be like this @example \n note it must start with '@' sign", chat_id=update.effective_user.id, message_id=message_id_split)
                     time.sleep(10)
                     # get all channels inside the database
                     run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
@@ -165,11 +165,34 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     await bot.editMessageText(text=f"please insert channel that you want to auto comment on it",
                                               chat_id=update.effective_user.id, message_id=message_id_split,
                                               reply_markup=inline_keyboards)
-
             if command_split == 'setting':
-                print('this is setting')
+                pass
             if command_split == 'change_email':
-                print("it was change email")
+                async def email_validation(email):
+                    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                    if re.match(regex, email):
+                        return True
+                    else:
+                        return False
+                email_validation_var = await email_validation(update.message.text)
+                if email_validation_var:
+                    async def change_gmail(id, gmail):
+                        try:
+                            command = f"UPDATE ADMIN SET email = '{gmail}', send_email = TRUE WHERE telegram_id = '{id}' "
+                            execute = cursor.execute(command)
+                            connect.commit()
+                            return True
+                        except:
+                            return False
+
+                    is_added = await change_gmail(update.effective_user.id, update.message.text)
+                    if is_added:
+                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤", chat_id=update.effective_user.id, message_id=message_id_split)
+                else:
+                    await bot.editMessageText(text=f"please enter the right format of email example: \n\n youremail@gmail.com", chat_id=update.effective_user.id, message_id=message_id_split)
+                    time.sleep(7)
+                    await bot.editMessageText(text=f"please enter you email address", chat_id=update.effective_user.id, message_id=message_id_split)
+
             if command_split == 'add_email':
                 print("it was add email")
             if command_split == 'start_command':
@@ -463,8 +486,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             except:
                 return False
 
-        edit_email_message = await bot.send_message(chat_id=update.effective_user.id,
-                                                    text=f"now insert new email you want to enter \n note: ⚡ it must has '@' sign and end up with '.com' ")
+        edit_email_message = await bot.send_message(chat_id=update.effective_user.id, text=f"insert your new email address 📨")
         edit_email = await change_email_status(update.effective_user.id, edit_email_message['message_id'])
 
     if query.data == 'add_email':
@@ -477,8 +499,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             except:
                 return False
 
-        add_email_message = await bot.send_message(chat_id=update.effective_user.id,
-                                                   text=f"now insert  email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ")
+        add_email_message = await bot.send_message(chat_id=update.effective_user.id, text=f"now insert  email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ")
         add_email = await add_email_status(update.effective_user.id, add_email_message['message_id'])
 
     if query.data == 'add-channel-start-key':
@@ -542,7 +563,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
             message_with_email = await bot.send_message(update.effective_user.id, f"""
         this is your email: {email[0]}
-        do you want to change it or change the notification sending status
+do you want to change it or change the notification sending status
                     """, reply_markup=reply_keyboard_markup)
             last_step_update = await update_last_step(str(update.effective_user.id), message_with_email['message_id'])
         else:
