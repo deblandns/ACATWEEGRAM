@@ -332,6 +332,18 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
     if query.data == 'notification_turn_on':
+        # get last step inside database
+        async def check_last_step(user_id):
+            last_step = cursor.execute(f"SELECT last_stp FROM ADMIN WHERE telegram_id = '{user_id}' ")
+            last_stp_fetch = last_step.fetchall()
+            for data in last_stp_fetch:
+                return data[0]
+
+        user_last_stp_check = await check_last_step(update.effective_user.id)
+
+        last_stp_message_id = user_last_stp_check.split("#")[1]
+        print(f'this is last_stp_message_id: {last_stp_message_id}')
+
         async def change_notification_status(userid):
             try:
                 turn_on_command = f"UPDATE ADMIN SET send_email = TRUE WHERE telegram_id = '{userid}' "
@@ -342,14 +354,32 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 return False
 
         sending_email_turn_on = await change_notification_status(update.effective_user.id)
+        inline_keyboards = [
+            [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
+            [InlineKeyboardButton(text=f"Turn notification off 🔕",
+                                  callback_data='notification_off')],
+            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
+        ]
+        reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_on:
-            await context.bot.send_message(update.effective_user.id,
-                                           f"your email notification sending status is on you can get notified 🔔")
+            await context.bot.editMessageText(text=f"now you can get notified via email 🔔", chat_id=update.effective_user.id, message_id=last_stp_message_id, reply_markup=reply_keyboard_markup)
         else:
             await context.bot.send_message(update.effective_user.id,
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
 
     if query.data == 'notification_off':
+        # get last step inside database
+        async def check_last_step(user_id):
+            last_step = cursor.execute(f"SELECT last_stp FROM ADMIN WHERE telegram_id = '{user_id}' ")
+            last_stp_fetch = last_step.fetchall()
+            for data in last_stp_fetch:
+                return data[0]
+
+        user_last_stp_check = await check_last_step(update.effective_user.id)
+
+        last_stp_message_id = user_last_stp_check.split("#")[1]
+
+        # turn email sending off
         async def TurnOffEmailSending(userid):
             try:
                 turn_on_command = f"UPDATE ADMIN SET send_email = FALSE WHERE telegram_id = '{userid}' "
@@ -360,8 +390,15 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 return False
 
         sending_email_turn_off = await TurnOffEmailSending(update.effective_user.id)
+        inline_keyboards = [
+            [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
+            [InlineKeyboardButton(text=f"Turn notification On 🔔",
+                                  callback_data='notification_turn_on')],
+            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
+        ]
+        reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_off:
-            await context.bot.send_message(update.effective_user.id, f"email notification sending status is muted 🔇")
+            await context.bot.editMessageText(text=f"now your notification sending status is off 🔕", chat_id=update.effective_user.id, message_id=last_stp_message_id, reply_markup=reply_keyboard_markup)
         else:
             await context.bot.send_message(update.effective_user.id,
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
@@ -440,20 +477,22 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
         # in this section we check user email wheter user have email inside database or not
         async def check_user_email(user_id):
-            command = cursor.execute(f"SELECT email FROM ADMIN WHERE telegram_id = '{user_id}' ")
+            command = cursor.execute(f"SELECT email, send_email FROM ADMIN WHERE telegram_id = '{user_id}' ")
             email_data = cursor.fetchall()
             for data in email_data:
-                return data[0]
+                return data
 
         email = await check_user_email(update.effective_user.id)
-        if email:
-            inline_keyboards = [[InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")], [
-                InlineKeyboardButton(text=f"notification On 🔔", callback_data=f"notification_turn_on"),
-                InlineKeyboardButton(text=f"notification Off 🔕", callback_data=f"notification_off")],
-                                [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+        print(email[1])
+        if email[0]:
+            inline_keyboards = [
+                                [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
+                                [InlineKeyboardButton(text=f"{'Turn notification On 🔔' if email[1] == 0 else 'Turn notification Off 🔕' }", callback_data=f"{'notification_turn_on' if email[1] == 0 else 'notification_off'}")],
+                                [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
+            ]
             reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
             message_with_email = await bot.send_message(update.effective_user.id, f"""
-        this is your email: {email}
+        this is your email: {email[0]}
         do you want to change it or change the notification sending status
                     """, reply_markup=reply_keyboard_markup)
             last_step_update = await update_last_step(str(update.effective_user.id), message_with_email['message_id'])
