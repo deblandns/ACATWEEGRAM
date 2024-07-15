@@ -1,16 +1,12 @@
-import asyncio
 import logging
-import tweepy
 import sqlite3 as sql
-import requests as re
-from datetime import datetime
+
+import tweepy
 from telegram import *
 from telegram.ext import *
-from comments.comments import random_comment
 from tweepy import *
-from config import Telegram_config, Accounts
-from tweet_functions import comment_post
-from utilities.email_sender import user_email_sending_of_tweets_data
+
+from config import Telegram_config
 
 # the api keys and registration inputs
 consumer_key = 'Lrg6mlBu9KMRHwx9C3X0dCiAb'
@@ -345,7 +341,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         # get all channels inside the database
         run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
         datas = run_get_channel.fetchall()
-        glassy_inline_keyboard_channels = [[], [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+        glassy_inline_keyboard_channels = [[], [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
         if datas:
             for data in datas:
                 glassy_inline_keyboard_channels[0].append(
@@ -358,7 +354,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             last_step_update = await update_last_step(str(update.effective_user.id), add_channel_message['message_id'])
         else:
             # send message to page if database has no channel
-            cancell_button = [[InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+            cancell_button = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
             rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
             add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
                     send us channel name starting with '@' for example: 👉 @example""", reply_markup=rep_cancell_btn)
@@ -386,7 +382,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             inline_keyboards = [[InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")], [
                 InlineKeyboardButton(text=f"notification On 🔔", callback_data=f"notification_turn_on"),
                 InlineKeyboardButton(text=f"notification Off 🔕", callback_data=f"notification_off")],
-                                [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+                                [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
             reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
             message_with_email = await bot.send_message(update.effective_user.id, f"""
         this is your email: {email}
@@ -395,12 +391,13 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             last_step_update = await update_last_step(str(update.effective_user.id), message_with_email['message_id'])
         else:
             add_email_inline_keyboard = [[InlineKeyboardButton(text=f"add email 📩", callback_data=f"add_email")],
-                                         [InlineKeyboardButton(text=f"cancell 🚫", callback_data=f"cancell")]]
+                                         [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
             reply_inline_keyboards = InlineKeyboardMarkup(add_email_inline_keyboard)
             message_without_email = await bot.send_message(chat_id=update.effective_user.id,
-                                   text=f"please enter your email it must have '@' sign and end with '.com'",
-                                   reply_markup=reply_inline_keyboards)
-            last_step_update = await update_last_step(str(update.effective_user.id), message_without_email['message_id'])
+                                                           text=f"please enter your email it must have '@' sign and end with '.com'",
+                                                           reply_markup=reply_inline_keyboards)
+            last_step_update = await update_last_step(str(update.effective_user.id),
+                                                      message_without_email['message_id'])
 
 
 # async def get_user_tweets():
