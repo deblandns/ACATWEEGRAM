@@ -17,12 +17,11 @@ from telegram.ext import *
 logging.basicConfig(level=logging.INFO)
 
 # config database
-connect = sql.connect('database/acatweegram.db')
+file_dir = os.path.dirname('database')
+db = os.path.join(file_dir, 'database/acatweegram.db')
+connect = sql.connect(db)
+
 cursor = connect.cursor()
-
-# bot is the main api handler for all sources
-bot = Bot(token=token)
-
 
 # region all command extracted
 
@@ -63,9 +62,6 @@ for _ in range(1):  # To see the effect over multiple iterations
 # endregion
 
 # region config
-global accounts
-global accounts_id_ordered
-global token
 # these are accounts that we will always check them all
 accounts = ["@BBCWorld", "@entekhab_news", "@dailymonitor"]
 accounts_id_ordered = ['742143', '2682820352', '35697740']
@@ -225,6 +221,8 @@ def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str =
 
 # endregion
 
+# bot is the main api handler for all source
+bot = Bot(token=token)
 
 # region start
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
