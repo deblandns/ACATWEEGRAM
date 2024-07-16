@@ -1,4 +1,5 @@
 import logging
+import os.path
 import sqlite3 as sql
 import time
 import requests as re
@@ -6,6 +7,9 @@ import pandas as pd
 import tweepy
 import asyncio
 import regex as reg
+import openpyxl
+from openpyxl import Workbook
+from openpyxl.styles import Font
 from telegram import *
 from telegram.ext import *
 from tweepy import *
@@ -44,27 +48,6 @@ api = tweepy.API(auth)
 # this is client and it use to authenticate with v2
 client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token,
                 access_token_secret=access_token_secret)
-
-
-# excel insert function
-async def excel_insert(text, link, file_path='channels_excel.xlsx'):
-    try:
-        # load the file to this function
-        excel_load = pd.read_excel(file_path)
-
-        # create data frame of excel for new row
-        data_frame_new = pd.DataFrame({'text': [text], 'link': [link]})
-
-        # apped data into dataframe
-        data_frame_update = pd.concat([excel_load, data_frame_new], ignore_index=True)
-
-        # save the dataframe to excel file
-        data_frame_update.to_excel(file_path, index=False)
-
-        # return boolean to checkout the result
-        return True
-    except:
-        return False
 
 # region start
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
@@ -585,7 +568,7 @@ async def get_user_tweets():
         }
 
         headers = {
-            "x-rapidapi-key": "cb55117503mshb4d680ddb2c3067p1364dejsn60b23ba912e6",
+            "x-rapidapi-key": "b03dbb312fmsh8c93f24c66d3285p103508jsncbe689445f2f",
             "x-rapidapi-host": "twitter154.p.rapidapi.com"
         }
 
@@ -625,12 +608,10 @@ async def get_user_tweets():
             try:
                 # if data is not equal it mean there are new post so it will send comment and change the row data
                 tweet_link = comment_post.send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
-                comment_post_date_time = datetime.datetime.now()
 
                 # this function will update or insert data when is necessary and check the new dataset
                 async def update_data_or_insert(tweet_channel, tweet_id, tweet_title, used_comment, tweet_link) -> bool:
                     try:
-                        comment_post_datetime = datetime.datetime.now()
                         command = f"UPDATE tweet_data SET tweet_id = '{tweet_id}', tweet_title = '{tweet_title}', used_comment = '{used_comment}', tweet_link = '{tweet_link}' WHERE tweet_channel = '{tweet_channel}' "
                         cursor.execute(command)
                         connect.commit()
@@ -654,7 +635,15 @@ async def get_user_tweets():
                 data = await send_all_admin_ids()
 
                 if save_data:
-                    await excel_insert(random_comment_text, tweet_link)
+                    row = {
+                        'text': [f'{random_comment_text}'],
+                        'link': [f'{tweet_link}'],
+                    }
+                    df = pd.DataFrame(row)
+                    excel_reader = pd.read_excel('output.xlsx')
+                    writer = pd.ExcelWriter('output.xlsx', mode='a', if_sheet_exists='overlay')
+                    df.to_excel(writer, index=False, header=False, startrow=len(excel_reader) + 1)
+                    writer.close()
                     logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
                 else:
                     logging.debug(msg=f"there is problem with adding data to database")
