@@ -198,8 +198,33 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
 
                     is_added = await change_gmail(update.effective_user.id, update.message.text)
                     if is_added:
-                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤",
-                                                  chat_id=update.effective_user.id, message_id=message_id_split)
+                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤", chat_id=update.effective_user.id, message_id=message_id_split)
+                        time.sleep(4)
+                        keyboards = [
+                            [InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
+                            [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
+                            [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                            ]
+                        inline_keyboards = InlineKeyboardMarkup(keyboards)
+
+                        # add last step
+                        async def update_last_step(userid):
+                            try:
+                                insert_last_step = cursor.execute(
+                                    f"UPDATE ADMIN SET last_stp = 'homepage' WHERE telegram_id = '{userid}' ")
+                                connect.commit()
+                                return True
+                            except:
+                                return False
+
+                        last_step_update = await update_last_step(str(update.effective_user.id))
+                        await bot.editMessageText(text=f"""
+Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
+⚙ if you want to set gmail to get response from or change your data click on settings
+and if you want to get comments posted beside their links click on get excel file 📃
+""", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=inline_keyboards)
+
+
                 else:
                     await bot.editMessageText(
                         text=f"please enter the right format of email example: \n\n youremail@gmail.com",
@@ -231,6 +256,17 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
 
                     is_added = await add_email(update.effective_user.id, update.message.text)
                     if is_added:
+                        # add last step
+                        async def update_last_step(userid):
+                            try:
+                                insert_last_step = cursor.execute(
+                                    f"UPDATE ADMIN SET last_stp = 'homepage' WHERE telegram_id = '{userid}' ")
+                                connect.commit()
+                                return True
+                            except:
+                                return False
+
+                        last_step_update = await update_last_step(str(update.effective_user.id))
                         inline_keyboards = [
                             [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
                             [InlineKeyboardButton(
@@ -246,9 +282,14 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     await bot.editMessageText(
                         text=f"your entered wrong email the correct format is 'youremail@gmail.com'\n note: email must have '@' sign and end up with '.com' or other suffixes ",
                         chat_id=update.effective_user.id, message_id=message_id_split)
-                    time.sleep(10)
+                    time.sleep(7)
+                    cancell_glass_keyboard = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                    reply_markup_key = InlineKeyboardMarkup(cancell_glass_keyboard)
                     await bot.editMessageText(text=f"please enter your email address again",
-                                              chat_id=update.effective_user.id, message_id=message_id_split)
+                                              chat_id=update.effective_user.id,
+                                              message_id=message_id_split,
+                                              reply_markup=reply_markup_key
+                                              )
             if command_split == 'start_command':
                 await bot.send_message(chat_id=update.effective_user.id,
                                        text=f"please click on one of the buttons you want to work with")
@@ -476,6 +517,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         edit_email = await change_email_status(update.effective_user.id, edit_email_message['message_id'])
 
     if query.data == 'add_email':
+        message_id = query.message.message_id
         async def add_email_status(userid, message_id) -> bool:
             try:
                 email_ch = cursor.execute(
@@ -484,13 +526,18 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 return True
             except:
                 return False
-
-        add_email_message = await bot.send_message(chat_id=update.effective_user.id,
-                                                   text=f"now insert  email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ")
+        inline_keyboard = [[InlineKeyboardButton(text='back ↩', callback_data='cancell')]]
+        reply_keyboards = InlineKeyboardMarkup(inline_keyboard)
+        add_email_message = await bot.editMessageText(text=f"now insert email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ",
+                                                      chat_id=update.effective_user.id,
+                                                      message_id=message_id,
+                                                      reply_markup=reply_keyboards)
         add_email = await add_email_status(update.effective_user.id, add_email_message['message_id'])
 
     if query.data == 'add-channel-start-key':
         # add last step
+        message_id = query.message.message_id
+        print(f'add channel message id inside query handler: {message_id}')
         async def update_last_step(userid, message_id):
             try:
                 insert_last_step = cursor.execute(
