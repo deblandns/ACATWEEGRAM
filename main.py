@@ -6,6 +6,7 @@ import requests as re
 import pandas as pd
 import tweepy
 import asyncio
+import random
 import regex as reg
 import openpyxl
 from openpyxl import Workbook
@@ -13,18 +14,8 @@ from openpyxl.styles import Font
 from telegram import *
 from telegram.ext import *
 from tweepy import *
-from config import Telegram_config, Accounts
-from comments.comments import *
 from tweet_functions import comment_post
 from utilities.email_sender import *
-
-
-# the api keys and registration inputs
-consumer_key = 'Lrg6mlBu9KMRHwx9C3X0dCiAb'
-consumer_secret = 'tAj2K7CO3jZeOgJU0MEyfp9mEECnwV4vnApfnL5UL1oE8R24pZ'
-access_token = '1806779267663138816-ABi4RIXEsUSn9E6nU3qrNTutgPQ8Eg'
-access_token_secret = "WzvmfTmVWOVGiRjjTMEAGWdvq4wOgH4sw6sg5IkZoaa1y"
-bearer_api = "AAAAAAAAAAAAAAAAAAAAALhDugEAAAAAUwaPIWAJJFzIG00CZjaLMR8wahg%3DJ9Ncoe8WNnPxtiEZL2QNKg3KX0TieybMgpZvsFHAtihVTOfwVc"
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
@@ -34,19 +25,59 @@ connect = sql.connect('database/acatweegram.db')
 cursor = connect.cursor()
 
 # bot is the main api handler for all sources
-bot = Bot(token=Telegram_config.token)
+bot = Bot(token=token)
 
-# region Twitter config
 
-# Set up Twitter API authentication
-auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-auth.set_access_token(access_token, access_token_secret)
+# region all command extracted
 
-# Create API object
-api = tweepy.API(auth)
+# region random comment
+global random_comment
+comments = [
+    '👏 Appreciate the detailed report !',
+    '📢 Great coverage of the topic !',
+    '🌟 This article was very insightful !',
+    '👍 Thanks for sharing the news !',
+    '📰 Interesting update on current events !'
+]
 
-# this is client and it use to authenticate with v2
-client = Client(consumer_key=consumer_key, consumer_secret=consumer_secret, access_token=access_token, access_token_secret=access_token_secret)
+used_comments = []
+
+
+def random_comment() -> str:
+    global comments, used_comments
+
+    # this will Reset the comments list if all have been used
+    if len(comments) == 0:
+        comments = used_comments[:]
+        used_comments = []
+
+    # this variable will Pick a random comment
+    comment_picked = random.choice(comments)
+
+    # this section will remove the picked comment from the comments list and add it to the used comments list
+    comments.remove(comment_picked)
+    used_comments.append(comment_picked)
+
+    return comment_picked
+
+
+# Example usage
+for _ in range(1):  # To see the effect over multiple iterations
+    print(random_comment())
+# endregion
+
+# region config
+# these are accounts that we will always check them all
+accounts = ["@BBCWorld", "@entekhab_news", "@dailymonitor"]
+accounts_id_ordered = ['742143', '2682820352', '35697740']
+
+# this is bot token each bot have one of this tokens they use to response each api different
+token = '7223989618:AAFQ2Yr9ExJQC58IQwNe-9s8sxiiRqmEPwo'
+# endregion
+
+
+# endregion
+
 
 # region start
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
@@ -586,6 +617,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             for data in email_data:
                 return data
 
+        # if we check the user email we based on what we need will send message
         email = await check_user_email(update.effective_user.id)
         if email[0]:
             inline_keyboards = [
@@ -610,6 +642,7 @@ do you want to change it or change the notification sending status
                                                            reply_markup=reply_inline_keyboards)
             last_step_update = await update_last_step(str(update.effective_user.id),
                                                       message_without_email['message_id'])
+    # get excel file and send it to user whom want this file to be sended
     if query.data == 'get_excel_file':
         chat_id = update.effective_user.id
         message_id = query.message.message_id
@@ -629,7 +662,7 @@ and if you want to get comments posted beside their links click on get excel fil
 """, chat_id=chat_id, message_id=message_id, reply_markup=inline_keyboards)
 
 # async def get_user_tweets():
-#     for user_name, user_id in zip(Accounts.accounts, Accounts.accounts_id_ordered):
+#     for user_name, user_id in zip(accounts, accounts_id_ordered):
 #         url = "https://twitter154.p.rapidapi.com/user/tweets"
 #
 #         # parameters that we need to call url with
@@ -768,7 +801,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #     loop.run_until_complete(run_forever())
 
 # Create the application and pass it your bot's token
-app = ApplicationBuilder().token(Telegram_config.token).build()
+app = ApplicationBuilder().token(token).build()
 
 app.add_handler(CommandHandler('start', start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
