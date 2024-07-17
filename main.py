@@ -12,6 +12,7 @@ from telegram import *
 from telegram.ext import *
 
 # region logs
+# todo: add more accurate and complete logging
 # Set up logging
 logging.basicConfig(level=logging.INFO)
 # endregion
@@ -982,8 +983,8 @@ and if you want to get comments posted beside their links click on get excel fil
 #     loop.run_until_complete(run_forever())
 
 # Create the application and pass it your bot's token
-app = ApplicationBuilder().token(token).build()
-
+# todo: add http2
+app = ApplicationBuilder().http_version("2").token(token).build()
 app.add_handler(CommandHandler('start', start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
 app.add_handler(CallbackQueryHandler(call_back_notifications))
