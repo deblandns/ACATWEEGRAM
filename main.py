@@ -1,32 +1,35 @@
+import asyncio
 import logging
 import os.path
-import sqlite3 as sql
-import time
-import smtplib
-import requests as re
-import pandas as pd
-import asyncio
 import random
-import regex as reg
-from email.mime.text import MIMEText
+import smtplib as sm
+import sqlite3 as sql
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+import regex as reg
+import requests as re
 from telegram import *
 from telegram.ext import *
 
+# region logs
 # Set up logging
 logging.basicConfig(level=logging.INFO)
+# endregion
 
+# region sql config
 # config database
 file_dir = os.path.dirname('database')
 db = os.path.join(file_dir, 'database/acatweegram.db')
 connect = sql.connect(db)
-
 cursor = connect.cursor()
+# endregion
 
 # region all command extracted
 
 # region random comment
 global random_comment
+# todo: remove this list and get comment from sql with random
+# todo: add command to add comment to sql instead of editing message
 comments = [
     '👏 Appreciate the detailed report !',
     '📢 Great coverage of the topic !',
@@ -36,7 +39,6 @@ comments = [
 ]
 
 used_comments = []
-
 
 def random_comment() -> str:
     global comments, used_comments
@@ -63,6 +65,7 @@ for _ in range(1):  # To see the effect over multiple iterations
 
 # region config
 # these are accounts that we will always check them all
+# todo: remove account that need to handle manually
 accounts = ["@BBCWorld", "@entekhab_news", "@dailymonitor"]
 accounts_id_ordered = ['742143', '2682820352', '35697740']
 
@@ -71,9 +74,11 @@ token = '7223989618:AAFQ2Yr9ExJQC58IQwNe-9s8sxiiRqmEPwo'
 # endregion
 
 # region send_comment
+# todo: remove all globals which they are residuals
 global send_comment
 # this is the function that we call when we want to send comment
 url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
+
 
 def send_comment(text: str, post_id: str, channel_name: str) -> str:
     """
@@ -180,13 +185,18 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
         return f"https://x.com/{channel_name}/status/{post_id}"
     else:
         return "not working may you written comment twice"
+
+
 # endregion
+
 
 # region email_sender function
 global user_email_sending_of_tweets_data
+
+
 def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str = None, email: str = None,
-                                   random_comment_text: str = None, tweet_title: str = None, tweet_id: str = None,
-                                   telegram_id=None):
+                                      random_comment_text: str = None, tweet_title: str = None, tweet_id: str = None,
+                                      telegram_id=None):
     content = f"""
                 Hi user: {user_name} 🌟 
             I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
@@ -217,37 +227,47 @@ def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str =
             mail.sendmail(sender, recipient, msg.as_string())
     except Exception as e:
         print(f"Failed to send email: {e}")
-# endregion
 
 # endregion
-
+# endregion
 
 # region sql last_step functions
 
 # region check last step
 global check_last_step
+
+
 # get last_step and check it
 async def check_last_step(user_id):
-    last_step = cursor.execute("SELECT last_stp FROM ADMIN WHERE telegram_id = ? ", (user_id, ))
+    last_step = cursor.execute("SELECT last_stp FROM ADMIN WHERE telegram_id = ? ", (user_id,))
     last_stp_fetch = last_step.fetchone()
     return last_stp_fetch[0]
+
+
 # endregion
 
 # region start command last_step
 global update_last_step_start
+
+
 # add last step of start
 async def update_last_step_start(userid, message_id):
     try:
         message_id_string = f"start_command#{message_id}"
-        insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ?  WHERE telegram_id = ?", (message_id_string, userid))
+        insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ?  WHERE telegram_id = ?",
+                                          (message_id_string, userid))
         connect.commit()
         return True
     except:
         return False
+
+
 # endregion
 
 # region update last step to homepage
 global update_last_step_homepage
+
+
 # add last step of homepage
 async def update_last_step_homepage(userid):
     try:
@@ -256,12 +276,16 @@ async def update_last_step_homepage(userid):
         return True
     except:
         return False
-# endregion
+
 
 # endregion
 
+# endregion
+
+# region bot
 # bot is the main api handler for all source
 bot = Bot(token=token)
+# endregion
 
 # region escape the charectors
 # escape the charectors
@@ -285,6 +309,8 @@ def escape_characters_for_markdown(text: str):
     result = result.replace("}", "\}")
     result = result.replace(">", "\>")
     return result
+
+
 # endregion
 
 # region start
@@ -292,6 +318,7 @@ def escape_characters_for_markdown(text: str):
 async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this variable will get the user id then we will check whether is admin or not
     user_id = update.effective_user.id
+
     # region check_admin class
 
     # check_admin this function name check admin will check the admin and then response True or False base on user_id
@@ -318,16 +345,20 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     inline_keyboards = InlineKeyboardMarkup(keyboards)
     # endregion check admin class
     if admin_check:
-        admin_greet_message = await context.bot.send_message(update.effective_user.id, text=escape_characters_for_markdown(f"""\
+        admin_greet_message = await context.bot.send_message(update.effective_user.id,
+                                                             text=escape_characters_for_markdown(f"""\
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
 ⚙ if you want to set gmail to get response from or change your data click on settings
 and if you want to get comments posted beside their links click on get excel file 📃
 """), reply_markup=inline_keyboards, parse_mode=constants.ParseMode.MARKDOWN_V2)
         last_step_update = await update_last_step_start(str(user_id), admin_greet_message['message_id'])
     else:
-        await context.bot.send_message(update.effective_user.id, escape_characters_for_markdown(f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧"), parse_mode=constants.ParseMode.MARKDOWN_V2)
-# endregion
+        await context.bot.send_message(update.effective_user.id, escape_characters_for_markdown(
+            f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧"),
+                                       parse_mode=constants.ParseMode.MARKDOWN_V2)
 
+
+# endregion
 
 # region message_handler
 # message the admin that we`ve found new post on Twitter
@@ -352,7 +383,8 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     # insert function below can insert channels that user send to us
                     async def Insert_channel(channel_name):
                         try:
-                            run_insertion = cursor.execute("INSERT INTO tweet_data(tweet_channel) VALUES (?)", (channel_name,))
+                            run_insertion = cursor.execute("INSERT INTO tweet_data(tweet_channel) VALUES (?)",
+                                                           (channel_name,))
                             connect.commit()
                             return True
                         except:
@@ -363,10 +395,12 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         # get all channels inside the database
                         run_get_channel = cursor.execute("SELECT tweet_channel FROM tweet_data")
                         datas = run_get_channel.fetchall()
-                        glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                        glassy_inline_keyboard_channels = [
+                            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                         if datas:
                             for data in datas:
-                                glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+                                glassy_inline_keyboard_channels.insert(0, [
+                                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
                             inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
                         await bot.editMessageText(
                             text=f"channel name : {update.message.text} has been added to database ✅",
@@ -377,14 +411,15 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     await bot.editMessageText(
                         text=f"wrong format it must be like this @example \n note it must start with '@' sign",
                         chat_id=update.effective_user.id, message_id=message_id_split)
-                    asyncio.sleep(3)
+                    await asyncio.sleep(3)
                     # get all channels inside the database
                     run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
                     datas = run_get_channel.fetchall()
                     glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                     if datas:
                         for data in datas:
-                            glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+                            glassy_inline_keyboard_channels.insert(0, [
+                                InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
                         inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
                     await bot.editMessageText(text=f"please insert channel that you want to auto comment on it",
                                               chat_id=update.effective_user.id, message_id=message_id_split,
@@ -403,7 +438,8 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                 if email_validation_var:
                     async def change_gmail(id, gmail):
                         try:
-                            execute = cursor.execute("UPDATE ADMIN SET email = ?, send_email = TRUE WHERE telegram_id = ?", (gmail, id,))
+                            execute = cursor.execute(
+                                "UPDATE ADMIN SET email = ?, send_email = TRUE WHERE telegram_id = ?", (gmail, id,))
                             connect.commit()
                             return True
                         except:
@@ -411,13 +447,14 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
 
                     is_added = await change_gmail(update.effective_user.id, update.message.text)
                     if is_added:
-                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤", chat_id=update.effective_user.id, message_id=message_id_split)
-                        asyncio.sleep(3)
+                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤",
+                                                  chat_id=update.effective_user.id, message_id=message_id_split)
+                        await asyncio.sleep(3)
                         keyboards = [
                             [InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
                             [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
                             [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
-                            ]
+                        ]
                         inline_keyboards = InlineKeyboardMarkup(keyboards)
 
                         last_step_update = await update_last_step_homepage(str(update.effective_user.id))
@@ -432,7 +469,7 @@ and if you want to get comments posted beside their links click on get excel fil
                     await bot.editMessageText(
                         text=f"please enter the right format of email example: \n\n youremail@gmail.com",
                         chat_id=update.effective_user.id, message_id=message_id_split)
-                    asyncio.sleep(7)
+                    await asyncio.sleep(7)
                     await bot.editMessageText(text=f"please enter you email address",
                                               chat_id=update.effective_user.id,
                                               message_id=message_id_split)
@@ -451,7 +488,9 @@ and if you want to get comments posted beside their links click on get excel fil
                     # add email to database of user
                     async def add_email(id, gmail):
                         try:
-                            execute = cursor.execute("UPDATE ADMIN SET email = ?, send_email = TRUE, send_email = TRUE WHERE telegram_id = ?",(gmail, id,))
+                            execute = cursor.execute(
+                                "UPDATE ADMIN SET email = ?, send_email = TRUE, send_email = TRUE WHERE telegram_id = ?",
+                                (gmail, id,))
                             connect.commit()
                             return True
                         except:
@@ -459,7 +498,6 @@ and if you want to get comments posted beside their links click on get excel fil
 
                     is_added = await add_email(update.effective_user.id, update.message.text)
                     if is_added:
-
                         last_step_update = await update_last_step_homepage(str(update.effective_user.id))
                         inline_keyboards = [
                             [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
@@ -476,7 +514,7 @@ and if you want to get comments posted beside their links click on get excel fil
                     await bot.editMessageText(
                         text=f"your entered wrong email the correct format is 'youremail@gmail.com'\n note: email must have '@' sign and end up with '.com' or other suffixes ",
                         chat_id=update.effective_user.id, message_id=message_id_split)
-                    asyncio.sleep(7)
+                    await asyncio.sleep(7)
                     cancell_glass_keyboard = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                     reply_markup_key = InlineKeyboardMarkup(cancell_glass_keyboard)
                     await bot.editMessageText(text=f"please enter your email address again",
@@ -493,9 +531,11 @@ and if you want to get comments posted beside their links click on get excel fil
             command = user_last_stp_check
             print(command)
 
+
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
-    await query.answer()
+    print(query.to_dict())
+    # await query.answer()
     # check the query to validate whether if query_data is channel name if it`s channel name we will remove it from database
     if query.data:
         # check the query.data if it`s channel or not
@@ -529,9 +569,12 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                 if datas:
                     for data in datas:
-                        glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+                        glassy_inline_keyboard_channels.insert(0, [
+                            InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
                     inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
-                await bot.editMessageText(text=f"channel name: {query.data} deleted ⭕", chat_id=update.effective_user.id, message_id=last_step_message_id, reply_markup=inline_keyboards)
+                await bot.editMessageText(text=f"channel name: {query.data} deleted ⭕",
+                                          chat_id=update.effective_user.id, message_id=last_step_message_id,
+                                          reply_markup=inline_keyboards)
 
     if query.data == 'cancell':
         user_last_stp_check = await check_last_step(update.effective_user.id)
@@ -646,17 +689,18 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
 
     if query.data == 'change_email':
-        print(f"setting section message_id: {query.message.message_id}")
         message_id = query.message.message_id
         # in there we will change the last step to identify user status
         async def change_email_status(userid, message_id) -> bool:
             try:
                 message_id_last_Stp = f'change_email#{message_id}'
-                email_ch = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (message_id_last_Stp, userid))
+                email_ch = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                          (message_id_last_Stp, userid))
                 connect.commit()
                 return True
             except:
                 return False
+
         inline_keyboards = [[InlineKeyboardButton('back ↩', callback_data='cancell')]]
         reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
         edit_email_message = await bot.editMessageText(text=f"insert your new email address 📨",
@@ -668,30 +712,37 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
     if query.data == 'add_email':
         message_id = query.message.message_id
+
         async def add_email_status(userid, message_id) -> bool:
             try:
                 f_string_message_id = f'add_email#{message_id}'
-                email_ch = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (f_string_message_id, userid,))
+                email_ch = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                          (f_string_message_id, userid,))
                 connect.commit()
                 return True
             except:
                 return False
+
         inline_keyboard = [[InlineKeyboardButton(text='back ↩', callback_data='cancell')]]
         reply_keyboards = InlineKeyboardMarkup(inline_keyboard)
-        add_email_message = await bot.editMessageText(text=f"now insert email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ",
-                                                      chat_id=update.effective_user.id,
-                                                      message_id=message_id,
-                                                      reply_markup=reply_keyboards)
+        add_email_message = await bot.editMessageText(
+            text=f"now insert email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ",
+            chat_id=update.effective_user.id,
+            message_id=message_id,
+            reply_markup=reply_keyboards)
         add_email = await add_email_status(update.effective_user.id, add_email_message['message_id'])
 
     if query.data == 'add-channel-start-key':
+        # todo: add query.answer in each of states of functions
+        await query.answer(text=f"you can add channel", show_alert=True)
         message_id = query.message.message_id
 
         # add last step
         async def update_last_step_add_channel(userid, message_id):
             try:
                 add_channel_message_last_step = f'add_channel#{message_id}'
-                insert_last_step = cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (add_channel_message_last_step, userid))
+                insert_last_step = cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                                  (add_channel_message_last_step, userid))
                 connect.commit()
                 return True
             except:
@@ -705,7 +756,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         if datas:
             for data in datas:
                 # Create a new sublist for each button to display them vertically
-                glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+                glassy_inline_keyboard_channels.insert(0, [
+                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
 
             inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
 
@@ -715,9 +767,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 "send us channel name starting with '@' for example: 👉 @example",
                 reply_markup=inline_keyboard
             )
-            last_step_update = await update_last_step_add_channel(
-                str(update.effective_user.id), add_channel_message['message_id']
-            )
+            last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
         else:
             # Send message to page if database has no channels
             cancell_button = [[InlineKeyboardButton(text=f"back ↩️", callback_data=f"cancell")]]
@@ -728,13 +778,13 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 reply_markup=rep_cancell_btn
             )
 
-
     if query.data == 'setting-keyboard-glass-key':
         # add last step
         async def update_last_step_setting(userid, message_id):
             try:
                 setting_last_step_change = f'setting#{message_id}'
-                insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (setting_last_step_change, userid,))
+                insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                                  (setting_last_step_change, userid,))
                 connect.commit()
                 return True
             except:
@@ -762,7 +812,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         this is your email: {email[0]}
 do you want to change it or change the notification sending status
                     """, reply_markup=reply_keyboard_markup)
-            last_step_update = await update_last_step_setting(str(update.effective_user.id), message_with_email['message_id'])
+            last_step_update = await update_last_step_setting(str(update.effective_user.id),
+                                                              message_with_email['message_id'])
         else:
             add_email_inline_keyboard = [[InlineKeyboardButton(text=f"add email 📩", callback_data=f"add_email")],
                                          [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
@@ -777,8 +828,9 @@ do you want to change it or change the notification sending status
         message_id = query.message.message_id
         document_path = os.path.join(os.path.dirname('output.xlsx'), 'output.xlsx')
         await bot.send_document(chat_id=chat_id, document=document_path, caption=f"excel file ☝")
-        await bot.editMessageText(text=f"here is your document you can open it with excel opener app 😁", chat_id=chat_id, message_id=message_id)
-        asyncio.sleep(4)
+        await bot.editMessageText(text=f"here is your document you can open it with excel opener app 😁",
+                                  chat_id=chat_id, message_id=message_id)
+        await asyncio.sleep(4)
         keyboards = [[InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
                      [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
                      [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
