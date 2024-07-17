@@ -363,12 +363,10 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         # get all channels inside the database
                         run_get_channel = cursor.execute("SELECT tweet_channel FROM tweet_data")
                         datas = run_get_channel.fetchall()
-                        glassy_inline_keyboard_channels = [[], [
-                            InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                        glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                         if datas:
                             for data in datas:
-                                glassy_inline_keyboard_channels[0].append(
-                                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                                glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
                             inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
                         await bot.editMessageText(
                             text=f"channel name : {update.message.text} has been added to database ✅",
@@ -383,12 +381,10 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     # get all channels inside the database
                     run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
                     datas = run_get_channel.fetchall()
-                    glassy_inline_keyboard_channels = [[], [
-                        InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                    glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                     if datas:
                         for data in datas:
-                            glassy_inline_keyboard_channels[0].append(
-                                InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                            glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
                         inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
                     await bot.editMessageText(text=f"please insert channel that you want to auto comment on it",
                                               chat_id=update.effective_user.id, message_id=message_id_split,
@@ -530,12 +526,10 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 # get all channels inside the database
                 run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
                 datas = run_get_channel.fetchall()
-                glassy_inline_keyboard_channels = [[], [
-                    InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                 if datas:
                     for data in datas:
-                        glassy_inline_keyboard_channels[0].append(
-                            InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                        glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
                     inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
                 await bot.editMessageText(text=f"channel name: {query.data} deleted ⭕", chat_id=update.effective_user.id, message_id=last_step_message_id, reply_markup=inline_keyboards)
 
@@ -711,8 +705,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         if datas:
             for data in datas:
                 # Create a new sublist for each button to display them vertically
-                glassy_inline_keyboard_channels.insert(0, [
-                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+                glassy_inline_keyboard_channels.insert(0, [InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
 
             inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
 
