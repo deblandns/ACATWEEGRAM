@@ -497,7 +497,6 @@ and if you want to get comments posted beside their links click on get excel fil
             command = user_last_stp_check
             print(command)
 
-
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     await query.answer()
@@ -704,33 +703,45 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             except:
                 return False
 
-        # get all channels inside the database
+        # Get all channels inside the database
         run_get_channel = cursor.execute("SELECT tweet_channel FROM tweet_data")
         datas = run_get_channel.fetchall()
-        glassy_inline_keyboard_channels = [[], [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+        glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩️", callback_data=f"cancell")]]
+
         if datas:
             for data in datas:
-                glassy_inline_keyboard_channels[0].append(
-                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}'))
+                # Create a new sublist for each button to display them vertically
+                glassy_inline_keyboard_channels.insert(0, [
+                    InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+
             inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
 
-            # send message to page if database have channel
-            add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
-                    send us channel name starting with '@' for example: 👉 @example""", reply_markup=inline_keyboard)
-            last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
+            # Send message to page if database has channels
+            add_channel_message = await context.bot.send_message(
+                update.effective_user.id,
+                "send us channel name starting with '@' for example: 👉 @example",
+                reply_markup=inline_keyboard
+            )
+            last_step_update = await update_last_step_add_channel(
+                str(update.effective_user.id), add_channel_message['message_id']
+            )
         else:
-            # send message to page if database has no channel
-            cancell_button = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+            # Send message to page if database has no channels
+            cancell_button = [[InlineKeyboardButton(text=f"back ↩️", callback_data=f"cancell")]]
             rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
-            add_channel_message = await context.bot.send_message(update.effective_user.id, f"""
-                    send us channel name starting with '@' for example: 👉 @example""", reply_markup=rep_cancell_btn)
+            add_channel_message = await context.bot.send_message(
+                update.effective_user.id,
+                "send us channel name starting with '@' for example: 👉 @example",
+                reply_markup=rep_cancell_btn
+            )
+
 
     if query.data == 'setting-keyboard-glass-key':
         # add last step
         async def update_last_step_setting(userid, message_id):
             try:
                 setting_last_step_change = f'setting#{message_id}'
-                insert_last_step = cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (setting_last_step_change, userid,))
+                insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (setting_last_step_change, userid,))
                 connect.commit()
                 return True
             except:
@@ -766,8 +777,7 @@ do you want to change it or change the notification sending status
             message_without_email = await bot.send_message(chat_id=update.effective_user.id,
                                                            text=f"please enter your email it must have '@' sign and end with '.com'",
                                                            reply_markup=reply_inline_keyboards)
-            last_step_update = await update_last_step_setting(str(update.effective_user.id),
-                                                      message_without_email['message_id'])
+            last_step_update = await update_last_step_setting(str(update.effective_user.id), ['message_id'])
     # get excel file and send it to user whom want this file to be sended
     if query.data == 'get_excel_file':
         chat_id = update.effective_user.id
