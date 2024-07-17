@@ -983,7 +983,6 @@ and if you want to get comments posted beside their links click on get excel fil
 #     loop.run_until_complete(run_forever())
 
 # Create the application and pass it your bot's token
-# todo: add http2
 app = ApplicationBuilder().http_version("2").token(token).build()
 app.add_handler(CommandHandler('start', start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
