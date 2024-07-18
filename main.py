@@ -23,8 +23,8 @@ logging.basicConfig(
 logging.getLogger("httpx").setLevel(logging.WARNING)
 
 logg = logging.getLogger(__name__)
-logger.remove()
-logger.add(sys.stdout, level="INFO", format="{time} - {level} - {message}")
+# logger.remove()
+# logger.add(sys.stdout, level="INFO", format="{time} - {level} - {message}")
 logger.info('bot started')
 # endregion
 
@@ -368,6 +368,7 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     inline_keyboards = InlineKeyboardMarkup(keyboards)
     # endregion check admin class
     if admin_check:
+        logger.success(f"user {user_id} is admin")
         admin_greet_message = await context.bot.send_message(update.effective_user.id,
                                                              text=escape_characters_for_markdown(f"""\
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
@@ -376,6 +377,7 @@ and if you want to get comments posted beside their links click on get excel fil
 """), reply_markup=inline_keyboards, parse_mode=constants.ParseMode.MARKDOWN_V2)
         last_step_update = await update_last_step_start(str(user_id), admin_greet_message['message_id'])
     else:
+        logger.info(f"user f{user_id} is not admin")
         await context.bot.send_message(update.effective_user.id, escape_characters_for_markdown(
             f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧"),
                                        parse_mode=constants.ParseMode.MARKDOWN_V2)
@@ -387,6 +389,7 @@ and if you want to get comments posted beside their links click on get excel fil
 # message the admin that we`ve found new post on Twitter
 async def message_admin(update: Update, context: CallbackContext) -> None:
     message_receive = update.message.text
+    logger.info(f"user {update.effective_user.username} inserted {message_receive}")
     if message_receive:
         # run sql command to check last step of user
         user_last_stp_check = await check_last_step(update.effective_user.id)
@@ -415,6 +418,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
 
                     insert_data_to_channel = await Insert_channel(update.message.text)
                     if insert_data_to_channel:
+                        logger.success(f"user`s new channel name: {message_receive} added to database")
                         # get all channels inside the database
                         run_get_channel = cursor.execute("SELECT tweet_channel FROM tweet_data")
                         datas = run_get_channel.fetchall()
@@ -430,6 +434,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                             chat_id=update.effective_user.id, message_id=message_id_split,
                             reply_markup=inline_keyboards)
                 else:
+                    logger.debug(f"user {update.effective_user.username} inserted wrong channel")
                     # this section will edit message and say the issue then change the keys
                     await bot.editMessageText(
                         text=f"wrong format it must be like this @example \n note it must start with '@' sign",
