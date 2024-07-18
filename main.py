@@ -16,7 +16,13 @@ from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, Me
 # region logs
 # todo: add more accurate and complete logging
 # Set up logging
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+# set higher logging level for httpx to avoid all GET and POST requests being logged
+logging.getLogger("httpx").setLevel(logging.WARNING)
+
+logg = logging.getLogger(__name__)
 logger.remove()
 logger.add(sys.stdout, level="INFO", format="{time} - {level} - {message}")
 logger.info('bot started')
