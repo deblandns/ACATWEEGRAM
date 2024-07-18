@@ -29,7 +29,6 @@ db = os.path.join(file_dir, 'database/acatweegram.db')
 connect = sql.connect(db)
 cursor = connect.cursor()
 # endregion
-
 # region all command extracted
 
 # region random comment
@@ -44,10 +43,18 @@ comments = [
     '📰 Interesting update on current events !'
 ]
 
+# todo: prevent writing repetitive functions
+
+# todo: add aiosqlite database to project
+
+# todo: read python telegram bot documentation and say them in interview
+
+
 used_comments = []
 
 
 def random_comment() -> str:
+    logger.info('random comment generating runned')
     global comments, used_comments
 
     # this will Reset the comments list if all have been used
@@ -64,10 +71,6 @@ def random_comment() -> str:
 
     return comment_picked
 
-
-# Example usage
-for _ in range(1):  # To see the effect over multiple iterations
-    print(random_comment())
 # endregion
 
 # region config
