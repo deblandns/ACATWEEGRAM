@@ -258,10 +258,10 @@ global check_last_step
 
 # get last_step and check it
 async def check_last_step(user_id):
+    logger.info(f"last step try to check by user id : {user_id}")
     last_step = cursor.execute("SELECT last_stp FROM ADMIN WHERE telegram_id = ? ", (user_id,))
     last_stp_fetch = last_step.fetchone()
     return last_stp_fetch[0]
-
 
 # endregion
 
@@ -276,11 +276,11 @@ async def update_last_step_start(userid, message_id):
         insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ?  WHERE telegram_id = ?",
                                           (message_id_string, userid))
         connect.commit()
+        logger.success(f'last step update for user {userid} with message {message_id} started')
         return True
     except:
+        logger.warning(f"unable to update last step for user {userid}")
         return False
-
-
 # endregion
 
 # region update last step to homepage
@@ -292,8 +292,10 @@ async def update_last_step_homepage(userid):
     try:
         insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = 'homepage' WHERE telegram_id = ?", (userid,))
         connect.commit()
+        logger.success(f"last step convert to homepage set for userid {userid}")
         return True
     except:
+        logger.warning(f"unable to set step of homepage for userid {userid}")
         return False
 
 
@@ -339,9 +341,9 @@ def escape_characters_for_markdown(text: str):
 async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this variable will get the user id then we will check whether is admin or not
     user_id = update.effective_user.id
-
+    # log for the user that see which user started the bot
+    logger.info(f"userid {user_id} started the bot")
     # region check_admin class
-
     # check_admin this function name check admin will check the admin and then response True or False base on user_id
     async def check_admin(user_id: int) -> bool:
         """
