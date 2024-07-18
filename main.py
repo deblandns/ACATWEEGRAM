@@ -59,23 +59,13 @@ comments = [
 used_comments = []
 
 
-def random_comment() -> str:
+async def random_comment() -> str:
     logger.info('random comment generating runned')
-    global comments, used_comments
-
-    # this will Reset the comments list if all have been used
-    if len(comments) == 0:
-        comments = used_comments[:]
-        used_comments = []
-
-    # this variable will Pick a random comment
-    comment_picked = random.choice(comments)
-
-    # this section will remove the picked comment from the comments list and add it to the used comments list
-    comments.remove(comment_picked)
-    used_comments.append(comment_picked)
-
-    return comment_picked
+    global used_comments
+    sql_get_random_comment = cursor.execute(f"SELECT * FROM comments ORDER BY RANDOM() LIMIT 1")
+    picked_comment = sql_get_random_comment.fetchone()
+    # used_comments.append(comment_picked)
+    return picked_comment[0]
 
 # endregion
 
@@ -94,7 +84,7 @@ token = '7223989618:AAFQ2Yr9ExJQC58IQwNe-9s8sxiiRqmEPwo'
 url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
 
 
-def send_comment(text: str, post_id: str, channel_name: str) -> str:
+async def send_comment(text: str, post_id: str, channel_name: str) -> str:
     logger.info('send comment started')
     """
     add text you want to send as comment and post id you want to send image to
@@ -939,7 +929,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #         tweet_id = data['results'][0]['tweet_id']
 #         tweet_title = data['results'][0]['text']
 #         channel_name = data['results'][0]['user']['username']
-#         random_comment_text = random_comment()
+#         random_comment_text = await random_comment()
 #         # in here we will get instance of class sql function and then check the new tweet then run functions
 #
 #
@@ -966,7 +956,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #         else:
 #             try:
 #                 # if data is not equal it mean there are new post so it will send comment and change the row data
-#                 tweet_link = send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
+#                 tweet_link = await send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=user_name)
 #
 #                 # this function will update or insert data when is necessary and check the new dataset
 #                 async def update_data_or_insert(tweet_channel, tweet_id, tweet_title, used_comment, tweet_link) -> bool:
