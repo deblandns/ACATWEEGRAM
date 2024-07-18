@@ -453,6 +453,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                                               chat_id=update.effective_user.id, message_id=message_id_split,
                                               reply_markup=inline_keyboards)
             if command_split == 'setting':
+                logger.info(f"user trying to send message when user is in setting last step")
                 pass
             if command_split == 'change_email':
                 async def email_validation(email):
@@ -475,6 +476,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
 
                     is_added = await change_gmail(update.effective_user.id, update.message.text)
                     if is_added:
+                        logger.success(f"user {update.effective_user.username} with id {update.effective_user.id} inserted new email name {update.message.text} to database")
                         await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤",
                                                   chat_id=update.effective_user.id, message_id=message_id_split)
                         await asyncio.sleep(3)
@@ -494,9 +496,10 @@ and if you want to get comments posted beside their links click on get excel fil
 
 
                 else:
+                    logger.warning(f"user {update.effective_user.username} has insert the wrong format of email it was: {update.message.text}")
                     await bot.editMessageText(
-                        text=f"please enter the right format of email example: \n\n youremail@gmail.com",
-                        chat_id=update.effective_user.id, message_id=message_id_split)
+                    text=f"please enter the right format of email example: \n\n youremail@gmail.com",
+                    chat_id=update.effective_user.id, message_id=message_id_split)
                     await asyncio.sleep(7)
                     await bot.editMessageText(text=f"please enter you email address",
                                               chat_id=update.effective_user.id,
