@@ -281,6 +281,18 @@ async def update_last_step_homepage(userid):
 
 # endregion
 
+# region last step to add channel
+# add last step add channel
+async def update_last_step_add_channel(userid, message_id):
+    try:
+        add_channel_message_last_step = f'add_channel#{message_id}'
+        insert_last_step = cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",(add_channel_message_last_step, userid))
+        connect.commit()
+        return True
+    except:
+        return False
+# endregion
+
 # endregion
 
 # region bot
@@ -343,7 +355,8 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # convert simple keys to inline keyboards when user click on /start or start bot
     keyboards = [[InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
                  [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
-                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                 [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                  ]
     inline_keyboards = InlineKeyboardMarkup(keyboards)
     # endregion check admin class
@@ -354,6 +367,7 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
 ⚙ if you want to set gmail to get response from or change your data click on settings
 and if you want to get comments posted beside their links click on get excel file 📃
+click on add comment 🎉 to add or delete comments
 """), reply_markup=inline_keyboards, parse_mode=constants.ParseMode.MARKDOWN_V2)
         last_step_update = await update_last_step_start(str(user_id), admin_greet_message['message_id'])
     else:
@@ -547,8 +561,7 @@ and if you want to get comments posted beside their links click on get excel fil
 
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
-    print(query.to_dict())
-    # await query.answer()
+    logger.info(f"query data: {query.to_dict()}")
     # check the query to validate whether if query_data is channel name if it`s channel name we will remove it from database
     if query.data:
         # check the query.data if it`s channel or not
@@ -786,19 +799,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
     if query.data == 'add-channel-start-key':
         logger.info(f"user {update.effective_user.username} with id {update.effective_user.id} clicked on add channel key")
         # todo: add query.answer in each of states of functions
-        await query.answer(text=f"you can add channel", show_alert=True)
+        await query.answer(text=f"channels must start with @ sign", show_alert=False)
         message_id = query.message.message_id
-
-        # add last step
-        async def update_last_step_add_channel(userid, message_id):
-            try:
-                add_channel_message_last_step = f'add_channel#{message_id}'
-                insert_last_step = cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                                  (add_channel_message_last_step, userid))
-                connect.commit()
-                return True
-            except:
-                return False
 
         # Get all channels inside the database
         run_get_channel = cursor.execute("SELECT tweet_channel FROM tweet_data")
