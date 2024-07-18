@@ -214,6 +214,7 @@ global user_email_sending_of_tweets_data
 def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str = None, email: str = None,
                                       random_comment_text: str = None, tweet_title: str = None, tweet_id: str = None,
                                       telegram_id=None):
+    logger.info("email sending function started")
     content = f"""
                 Hi user: {user_name} 🌟 
             I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
@@ -979,6 +980,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #                                                       email=f"{id[3]}", random_comment_text=f"{random_comment_text}",
 #                                                       tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
 #                     if user_email_sending_of_tweets_data:
+#                         logger.success('email has been send')
 #                         await bot.send_message(chat_id=f"{id[0]}",
 #                                                text=f"we`ve sent you the email address because you gave us that permission 📧",
 #                                                disable_web_page_preview=True)
