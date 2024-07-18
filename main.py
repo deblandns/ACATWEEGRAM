@@ -39,7 +39,6 @@ cursor = connect.cursor()
 # region all command extracted
 
 # region random comment
-global random_comment
 # todo: remove this list and get comment from sql with random
 # todo: add command to add comment to sql instead of editing message
 comments = [
@@ -92,7 +91,6 @@ token = '7223989618:AAFQ2Yr9ExJQC58IQwNe-9s8sxiiRqmEPwo'
 
 # region send_comment
 # todo: remove all globals which they are residuals
-global send_comment
 # this is the function that we call when we want to send comment
 url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
 
@@ -209,7 +207,6 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
 
 
 # region email_sender function
-global user_email_sending_of_tweets_data
 
 
 def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str = None, email: str = None,
@@ -254,8 +251,6 @@ def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str =
 # region sql last_step functions
 
 # region check last step
-global check_last_step
-
 
 # get last_step and check it
 async def check_last_step(user_id):
@@ -267,8 +262,6 @@ async def check_last_step(user_id):
 # endregion
 
 # region start command last_step
-global update_last_step_start
-
 
 # add last step of start
 async def update_last_step_start(userid, message_id):
@@ -285,8 +278,6 @@ async def update_last_step_start(userid, message_id):
 # endregion
 
 # region update last step to homepage
-global update_last_step_homepage
-
 
 # add last step of homepage
 async def update_last_step_homepage(userid):
