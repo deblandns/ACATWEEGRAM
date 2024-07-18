@@ -7,6 +7,7 @@ import smtplib as sm
 import sqlite3 as sql
 import regex as reg
 import requests as re
+import pandas as pd
 from loguru import logger
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -612,7 +613,6 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
     if query.data == 'cancell':
         user_last_stp_check = await check_last_step(update.effective_user.id)
         try:
-            logger.critical(f"{user_last_stp_check}")
             before_hashtag = None
             after_hashtag = None
             before_hashtag, after_hashtag = user_last_stp_check.split('#')
@@ -623,6 +623,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         last_step_update = await update_last_step_homepage(str(update.effective_user.id))
 
         if before_hashtag == 'homepage':
+            logger.info(f"user redirected from homepage to homepage again")
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
@@ -647,6 +648,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 reply_markup=reply_keyboards)
 
         if before_hashtag == 'add_channel':
+            logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add channel')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
@@ -659,6 +661,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 reply_markup=reply_keyboards)
 
         if before_hashtag == 'setting':
+            logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add setting')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
@@ -671,6 +674,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 reply_markup=reply_keyboards)
 
         if before_hashtag == 'change_email':
+            logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add change email')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
@@ -681,6 +685,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
         if before_hashtag == 'add_email':
+            logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
@@ -691,6 +696,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
     if query.data == 'notification_turn_on':
+        logger.success(f"user {update.effective_user.username} changed notification status to on")
         user_last_stp_check = await check_last_step(update.effective_user.id)
 
         last_stp_message_id = user_last_stp_check.split("#")[1]
@@ -712,10 +718,12 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         ]
         reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_on:
+            logger.success(f"user {update.effective_user.username} successfuly changed the notification status to on")
             await context.bot.editMessageText(text=f"now you can get notified via email 🔔",
                                               chat_id=update.effective_user.id, message_id=last_stp_message_id,
                                               reply_markup=reply_keyboard_markup)
         else:
+            logger.warning(f"user {update.effective_user.username} can`t change the email sending notification")
             await context.bot.send_message(update.effective_user.id,
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
 
@@ -742,10 +750,12 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         ]
         reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_off:
+            logger.success(f"user {update.effective_user.username} changed the notification status to off")
             await context.bot.editMessageText(text=f"now your notification sending status is off 🔕",
                                               chat_id=update.effective_user.id, message_id=last_stp_message_id,
                                               reply_markup=reply_keyboard_markup)
         else:
+            logger.warning(f"user {update.effective_user.username} change the notification status to off")
             await context.bot.send_message(update.effective_user.id,
                                            f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
 
@@ -795,6 +805,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         add_email = await add_email_status(update.effective_user.id, add_email_message['message_id'])
 
     if query.data == 'add-channel-start-key':
+        logger.info(f"user {update.effective_user.username} with id {update.effective_user.id} clicked on add channel key")
         # todo: add query.answer in each of states of functions
         await query.answer(text=f"you can add channel", show_alert=True)
         message_id = query.message.message_id
@@ -842,6 +853,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             )
 
     if query.data == 'setting-keyboard-glass-key':
+        logger.info(f"user {update.effective_user.username} clicked on setting section with user_id {update.effective_user.id} ")
         # add last step
         async def update_last_step_setting(userid, message_id):
             try:
@@ -863,6 +875,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         # if we check the user email we based on what we need will send message
         email = await check_user_email(update.effective_user.id)
         if email[0]:
+            logger.success(f"user {update.effective_user.username} with id {update.effective_user.id} have email inside database")
             inline_keyboards = [
                 [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
                 [InlineKeyboardButton(
@@ -878,6 +891,7 @@ do you want to change it or change the notification sending status
             last_step_update = await update_last_step_setting(str(update.effective_user.id),
                                                               message_with_email['message_id'])
         else:
+            logger.info(f"user {update.effective_user.username} with id {update.effective_user.id} has no email so user have to add")
             add_email_inline_keyboard = [[InlineKeyboardButton(text=f"add email 📩", callback_data=f"add_email")],
                                          [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
             reply_inline_keyboards = InlineKeyboardMarkup(add_email_inline_keyboard)
@@ -887,6 +901,7 @@ do you want to change it or change the notification sending status
             last_step_update = await update_last_step_setting(str(update.effective_user.id), ['message_id'])
     # get excel file and send it to user whom want this file to be sended
     if query.data == 'get_excel_file':
+        logger.success(f"user with userid={update.effective_user.id} want to get excel file {update.effective_user.username}")
         chat_id = update.effective_user.id
         message_id = query.message.message_id
         document_path = os.path.join(os.path.dirname('output.xlsx'), 'output.xlsx')
@@ -908,6 +923,7 @@ and if you want to get comments posted beside their links click on get excel fil
 
 # async def get_user_tweets():
 #     for user_name, user_id in zip(accounts, accounts_id_ordered):
+#         logger.info(f"bot trying to get this channel {user_name} last tweet")
 #         url = "https://twitter154.p.rapidapi.com/user/tweets"
 #
 #         # parameters that we need to call url with
@@ -929,6 +945,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #
 #         # get and extract data from response
 #         data = response.json()
+#         logger.info(f"api response data {data}")
 #         tweet_id = data['results'][0]['tweet_id']
 #         tweet_title = data['results'][0]['text']
 #         channel_name = data['results'][0]['user']['username']
@@ -954,7 +971,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #
 #         # this function will get inputs and save them or update them and then send comment
 #         if is_equal:
-#             print('data are equal')
+#             logger.info(f"data is equal so we don`t get any tweet of this channel {user_name} until we get new tweet")
 #             pass
 #         else:
 #             try:
@@ -968,12 +985,11 @@ and if you want to get comments posted beside their links click on get excel fil
 #                         cursor.execute(command)
 #                         connect.commit()
 #                         return True
-#                     except sqlite3.Error as er:
+#                     except sql.Error as er:
 #                         print('SQLite error: %s' % (' '.join(er.args)))
 #                         print("Exception class is: ", er.__class__)
 #                         print('SQLite traceback: ')
 #                         exc_type, exc_value, exc_tb = sys.exc_info()
-#                         print(traceback.format_exception(exc_type, exc_value, exc_tb))
 #                         return False
 #
 #                 save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=f'{tweet_id}',
@@ -1012,7 +1028,6 @@ and if you want to get comments posted beside their links click on get excel fil
 #
 # and tweet id was: 🔢 {tweet_id}
 # \n
-# date & time: {comment_post_date_time}
 # """, disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
 #                 # if user in it`s setting turn email sending true we can send user notification from email also
 #                 if id[2]:
@@ -1030,7 +1045,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #                 else:
 #                     pass
 #             except:
-#                 logging.error(msg='can`t send message may it`s repetitive')
+#                 logger.critical(f'can`t send message may it`s repetitive inside {user_name}')
 #
 #
 # async def run_forever():
@@ -1054,5 +1069,5 @@ app.add_handler(CallbackQueryHandler(call_back_notifications))
 
 # Start the async task to fetch tweets
 if app.run_polling:
-    print("working..")
+    logger.success(f"but is running successfully")
 app.run_polling()
