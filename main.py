@@ -97,6 +97,7 @@ url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
 
 
 def send_comment(text: str, post_id: str, channel_name: str) -> str:
+    logger.info('send comment started')
     """
     add text you want to send as comment and post id you want to send image to
     the channel name that we are going to send message to :param channel_name:
@@ -194,8 +195,8 @@ def send_comment(text: str, post_id: str, channel_name: str) -> str:
     data = re.post(url, json=payload, headers=headers, cookies=cookies)
 
     # print data to visualize everything we get
-    print(data.status_code)
-    print(data.json())
+    logger.info(f"send comment status code is {data.status_code}")
+    logger.info(f"json response from sending comment{data.json()}")
     # this will return post link
     if data.status_code == 200:
         return f"https://x.com/{channel_name}/status/{post_id}"
