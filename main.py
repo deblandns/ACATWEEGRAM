@@ -90,7 +90,6 @@ token = '7223989618:AAFQ2Yr9ExJQC58IQwNe-9s8sxiiRqmEPwo'
 # endregion
 
 # region send_comment
-# todo: remove all globals which they are residuals
 # this is the function that we call when we want to send comment
 url = 'https://x.com/i/api/graphql/oB-5XsHNAbjvARJEc8CZFw/CreateTweet'
 
