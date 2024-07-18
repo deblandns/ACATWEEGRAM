@@ -529,6 +529,7 @@ and if you want to get comments posted beside their links click on get excel fil
 
                     is_added = await add_email(update.effective_user.id, update.message.text)
                     if is_added:
+                        logger.success(f"user {update.effective_user.username} inserted it`s first email to database")
                         last_step_update = await update_last_step_homepage(str(update.effective_user.id))
                         inline_keyboards = [
                             [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
@@ -542,6 +543,7 @@ and if you want to get comments posted beside their links click on get excel fil
                                                   chat_id=update.effective_user.id, message_id=message_id_split,
                                                   reply_markup=reply_keyboard_markup)
                 else:
+                    logger.debug(f"user {update.effective_user.username} inserted wrong email for the first time")
                     await bot.editMessageText(
                         text=f"your entered wrong email the correct format is 'youremail@gmail.com'\n note: email must have '@' sign and end up with '.com' or other suffixes ",
                         chat_id=update.effective_user.id, message_id=message_id_split)
@@ -610,11 +612,39 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
     if query.data == 'cancell':
         user_last_stp_check = await check_last_step(update.effective_user.id)
         try:
+            logger.critical(f"{user_last_stp_check}")
+            before_hashtag = None
+            after_hashtag = None
             before_hashtag, after_hashtag = user_last_stp_check.split('#')
+            without_hashtag = None
         except:
             without_hashtag = user_last_stp_check
 
         last_step_update = await update_last_step_homepage(str(update.effective_user.id))
+
+        if before_hashtag == 'homepage':
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                ]
+            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.editMessageText(
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                chat_id=update.effective_user.id,
+                message_id=query.message.message_id,
+                reply_markup=reply_keyboards)
+
+        if without_hashtag == 'homepage':
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                ]
+            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.editMessageText(
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                chat_id=update.effective_user.id,
+                message_id=query.message.message_id,
+                reply_markup=reply_keyboards)
 
         if before_hashtag == 'add_channel':
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
