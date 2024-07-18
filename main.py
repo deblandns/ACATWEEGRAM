@@ -1,20 +1,25 @@
 import asyncio
+import sys
 import logging
 import os.path
 import random
 import smtplib as sm
 import sqlite3 as sql
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 import regex as reg
 import requests as re
-from telegram import *
-from telegram.ext import *
+from loguru import logger
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from telegram import Update, Bot, InlineKeyboardButton, constants, InlineKeyboardMarkup, User
+from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 
 # region logs
 # todo: add more accurate and complete logging
 # Set up logging
 logging.basicConfig(level=logging.INFO)
+logger.remove()
+logger.add(sys.stdout, level="INFO", format="{time} - {level} - {message}")
+logger.info('bot started')
 # endregion
 
 # region sql config
@@ -40,6 +45,7 @@ comments = [
 ]
 
 used_comments = []
+
 
 def random_comment() -> str:
     global comments, used_comments
@@ -229,6 +235,7 @@ def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str =
     except Exception as e:
         print(f"Failed to send email: {e}")
 
+
 # endregion
 # endregion
 
@@ -286,6 +293,8 @@ async def update_last_step_homepage(userid):
 # region bot
 # bot is the main api handler for all source
 bot = Bot(token=token)
+
+
 # endregion
 
 # region escape the charectors
@@ -691,6 +700,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
     if query.data == 'change_email':
         message_id = query.message.message_id
+
         # in there we will change the last step to identify user status
         async def change_email_status(userid, message_id) -> bool:
             try:
@@ -768,7 +778,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 "send us channel name starting with '@' for example: 👉 @example",
                 reply_markup=inline_keyboard
             )
-            last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
+            last_step_update = await update_last_step_add_channel(str(update.effective_user.id),
+                                                                  add_channel_message['message_id'])
         else:
             # Send message to page if database has no channels
             cancell_button = [[InlineKeyboardButton(text=f"back ↩️", callback_data=f"cancell")]]
@@ -842,6 +853,7 @@ Hi Admin 🧨 if you want to add channel to get data from and auto comment click
 ⚙ if you want to set gmail to get response from or change your data click on settings
 and if you want to get comments posted beside their links click on get excel file 📃
 """, chat_id=chat_id, message_id=message_id, reply_markup=inline_keyboards)
+
 
 # async def get_user_tweets():
 #     for user_name, user_id in zip(accounts, accounts_id_ordered):
@@ -983,7 +995,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #     loop.run_until_complete(run_forever())
 
 # Create the application and pass it your bot's token
-app = ApplicationBuilder().http_version("2").token(token).build()
+app = ApplicationBuilder().http_version(http_version='2').token(token).build()
 app.add_handler(CommandHandler('start', start))
 app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
 app.add_handler(CallbackQueryHandler(call_back_notifications))
