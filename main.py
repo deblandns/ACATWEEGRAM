@@ -66,7 +66,6 @@ async def random_comment() -> str:
     picked_comment = sql_get_random_comment.fetchone()
     # used_comments.append(comment_picked)
     return picked_comment[0]
-
 # endregion
 
 # region config
