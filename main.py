@@ -587,7 +587,7 @@ and if you want to get comments posted beside their links click on get excel fil
 
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
-    logger.info(f"query data: {query.to_dict()}")
+    logger.info(f"query data: {query.to_dict()} - {query.data}")
     # check the query to validate whether if query_data is channel name if it`s channel name we will remove it from database
     if query.data:
         # check the query.data if it`s channel or not
@@ -936,11 +936,22 @@ and if you want to get comments posted beside their links click on get excel fil
 """, chat_id=chat_id, message_id=message_id, reply_markup=inline_keyboards)
 
     if query.data == 'add-&-delete_comment':
+        # get last message id
         message_id = query.message.message_id
-        comments = await get_all_comments()
-        add_delete_comment = await add_or_delete_comment(update.effective_user.id, message_id)
-        logger.info(f"user {update.effective_user.username} with id {update.effective_user.id} clicked to add or delete comment")
-        await bot.edit_message_text(text=f"trying to create this section", chat_id=update.effective_user.id, message_id=message_id)
+        comments = await get_all_comments() # this will get the comments inside database to make it visible for user
+        logger.info(f"all of comments are {comments}") # this log will show the back-end developers about comments
+        add_delete_comment = await add_or_delete_comment(update.effective_user.id, message_id) # update last_step of user
+        # if user data enter correctly we can add dataset of updates and make a log
+        if add_delete_comment:
+            logger.success(f"user {update.effective_user.username} updated last stp of add or delete comment")
+        else:
+            logger.warning(f"user {update.effective_user.username} can not update the last step to add or delete")
+        # list of inline keyboards that contain cancel and comments inside database
+        inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
+        for comment in comments:
+            inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
+        keyboards = InlineKeyboardMarkup(inline_keyboards)
+        await bot.edit_message_text(text=f"please insert new comment", chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
 
 
 # async def get_user_tweets():
@@ -1091,5 +1102,5 @@ app.add_handler(CallbackQueryHandler(call_back_notifications))
 
 # Start the async task to fetch tweets
 if app.run_polling:
-    logger.success(f"but is running successfully")
+    logger.success(f"bot is running successfully")
 app.run_polling()
