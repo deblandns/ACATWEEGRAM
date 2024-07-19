@@ -316,6 +316,16 @@ async def add_or_delete_comment(user_id, message_id):
 
 # endregion
 
+# region add new comment into a database
+async def insert_comment(comment):
+    try:
+        cursor.execute("INSERT INTO comments VALUES(?)", (comment,))
+        connect.commit()
+        return True
+    except:
+        return False
+# endregion
+
 # endregion
 
 # region bot
@@ -575,11 +585,23 @@ and if you want to get comments posted beside their links click on get excel fil
                                               message_id=message_id_split,
                                               reply_markup=reply_markup_key
                                               )
+            if command_split == 'add-delete-comment':
+                is_insert = await insert_comment(update.message.text)
+                if is_insert:
+                    await bot.editMessageText(text=f"comment ⚡ {update.message.text} ⚡ has insert to database", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await asyncio.sleep(3)
+                    comments = await get_all_comments()
+                    inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
+                    for comment in comments:
+                        inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
+                    keyboards = InlineKeyboardMarkup(inline_keyboards)
+                    await bot.edit_message_text(text=f"please insert new comment", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=keyboards)
             if command_split == 'start_command':
                 await bot.send_message(chat_id=update.effective_user.id,
                                        text=f"please click on one of the buttons you want to work with")
             if command_split == 'homepage':
                 pass
+
         except:
             command = user_last_stp_check
             print(command)
