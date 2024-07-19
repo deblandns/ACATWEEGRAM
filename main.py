@@ -612,6 +612,28 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
     logger.info(f"query data: {query.to_dict()} - {query.data}")
     # check the query to validate whether if query_data is channel name if it`s channel name we will remove it from database
     if query.data:
+        last_step_checked = await check_last_step(update.effective_user.id)
+        try:
+            before_hashtag = None
+            after_hashtag = None
+            before_hashtag_comment, after_hashtag_comment = last_step_checked.split('#')
+            without_hashtag = None
+        except:
+            without_hashtag = last_step_checked
+
+        # give quick yes or no after user clicked on comment that want
+        if before_hashtag_comment == "add-delete-comment":
+            if query.data == 'cancell':
+                pass
+            else:
+                yes_or_no_glass_keys = [
+                    [InlineKeyboardButton(text=f"yes 🚮", callback_data=f"want_to_delete_comment!{query.data}")],
+                    [InlineKeyboardButton(text=f"no ↩", callback_data=f"regret_delete_comment")]
+                ]
+                reply_yon_keyboards = InlineKeyboardMarkup(yes_or_no_glass_keys)
+                await bot.editMessageText(text=f"are you sure you want to delete '{query.data}' ", chat_id=update.effective_user.id, message_id=after_hashtag_comment, reply_markup=reply_yon_keyboards)
+
+
         # check the query.data if it`s channel or not
         async def channel_validate(channel_name):
             regex = r'@[a-zA-Z0-9.-]'
