@@ -465,7 +465,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             # make last_stp data seperated and set it
             command_split, message_id_split = user_last_stp_check.split('#')
             if command_split == 'add_channel':
-                await bot.editMessageText(text=f"please wait generating...", chat_id=update.effective_user.id,
+                await bot.editMessageText(text=f"please wait while processing...", chat_id=update.effective_user.id,
                                           message_id=message_id_split)
                 channel_validate = await find_channel_id(update.message.text)
                 # async def channel_validate(channel_name):
