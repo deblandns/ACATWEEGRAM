@@ -7,6 +7,7 @@ import smtplib as sm
 import sqlite3 as sql
 import regex as reg
 import requests as re
+import aiosqlite
 import pandas as pd
 from loguru import logger
 from selenium import webdriver
@@ -15,8 +16,7 @@ from selenium.webdriver.common.by import By
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from telegram import Update, Bot, InlineKeyboardButton, constants, InlineKeyboardMarkup, User
-from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, \
-    filters
+from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 
 # region logs
 # Set up logging
@@ -64,11 +64,6 @@ async def random_comment() -> str:
 # endregion
 
 # region config
-# these are accounts that we will always check them all
-# todo: remove account that need to handle manually
-accounts = ["@BBCWorld", "@entekhab_news", "@dailymonitor"]
-accounts_id_ordered = ['742143', '2682820352', '35697740']
-
 # this is bot token each bot have one of this tokens they use to response each api different
 token = '7223989618:AAFQ2Yr9ExJQC58IQwNe-9s8sxiiRqmEPwo'
 
@@ -733,6 +728,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         user_last_comment_data = context.user_data.get(update.effective_user.id)
         remove_comment = await delete_comment(user_last_comment_data)  # this will delete comment
         if remove_comment:
+            await query.answer(f"comment name {user_last_comment_data} has been deleted", show_alert=True)
             logger.success(f"comment {user_last_comment_data} has been deleted")
             comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
             inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
@@ -888,6 +884,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         ]
         reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_on:
+            await query.answer(f"email sending turned on", show_alert=False, cache_time=3)
             logger.success(f"user {update.effective_user.username} successfuly changed the notification status to on")
             await context.bot.editMessageText(text=f"now you can get notified via email 🔔",
                                               chat_id=update.effective_user.id, message_id=last_stp_message_id,
@@ -920,6 +917,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         ]
         reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
         if sending_email_turn_off:
+            await query.answer(f"email sending turned off", show_alert=False)
             logger.success(f"user {update.effective_user.username} changed the notification status to off")
             await context.bot.editMessageText(text=f"now your notification sending status is off 🔕",
                                               chat_id=update.effective_user.id, message_id=last_stp_message_id,
@@ -977,7 +975,6 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
     if query.data == 'add-channel-start-key':
         logger.info(
             f"user {update.effective_user.username} with id {update.effective_user.id} clicked on add channel key")
-        # todo: add query.answer in each of states of functions
         await query.answer(text=f"channels must start with @ sign", show_alert=False)
         message_id = query.message.message_id
 
@@ -1013,8 +1010,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             )
 
     if query.data == 'setting-keyboard-glass-key':
-        logger.info(
-            f"user {update.effective_user.username} clicked on setting section with user_id {update.effective_user.id} ")
+        logger.info(f"user {update.effective_user.username} clicked on setting section with user_id {update.effective_user.id} ")
 
         # add last step
         async def update_last_step_setting(userid, message_id):
@@ -1065,11 +1061,11 @@ do you want to change it or change the notification sending status
             last_step_update = await update_last_step_setting(str(update.effective_user.id), ['message_id'])
     # get excel file and send it to user whom want this file to be sended
     if query.data == 'get_excel_file':
-        logger.success(
-            f"user with userid={update.effective_user.id} want to get excel file {update.effective_user.username}")
+        logger.success(f"user with userid={update.effective_user.id} want to get excel file {update.effective_user.username}")
         chat_id = update.effective_user.id
         message_id = query.message.message_id
         document_path = os.path.join(os.path.dirname('output.xlsx'), 'output.xlsx')
+        await query.answer(f"excel file sending has been started", show_alert=False)
         await bot.send_document(chat_id=chat_id, document=document_path, caption=f"excel file ☝")
         await bot.editMessageText(text=f"here is your document you can open it with excel opener app 😁",
                                   chat_id=chat_id, message_id=message_id)
