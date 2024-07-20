@@ -324,6 +324,8 @@ async def insert_comment(comment):
         return True
     except:
         return False
+
+
 # endregion
 
 # region delete comment based on comment message
@@ -334,6 +336,8 @@ async def delete_comment(comment_name):
         return True
     except:
         return False
+
+
 # endregion
 
 # endregion
@@ -598,14 +602,17 @@ and if you want to get comments posted beside their links click on get excel fil
             if command_split == 'add-delete-comment':
                 is_insert = await insert_comment(update.message.text)
                 if is_insert:
-                    await bot.editMessageText(text=f"comment ⚡ {update.message.text} ⚡ has insert to database", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await bot.editMessageText(text=f"comment ⚡ {update.message.text} ⚡ has insert to database",
+                                              chat_id=update.effective_user.id, message_id=message_id_split)
                     await asyncio.sleep(3)
                     comments = await get_all_comments()
                     inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
                     for comment in comments:
-                        inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
+                        inline_keyboards.insert(0,
+                                                [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
                     keyboards = InlineKeyboardMarkup(inline_keyboards)
-                    await bot.edit_message_text(text=f"please insert new comment", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=keyboards)
+                    await bot.edit_message_text(text=f"if you want to add comment send it as a message or if you want to delete message exist click on them", chat_id=update.effective_user.id,
+                                                message_id=message_id_split, reply_markup=keyboards)
             if command_split == 'start_command':
                 await bot.send_message(chat_id=update.effective_user.id,
                                        text=f"please click on one of the buttons you want to work with")
@@ -645,7 +652,12 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                     [InlineKeyboardButton(text=f"no ↩", callback_data=f"regret_delete_comment")]
                 ]
                 reply_yon_keyboards = InlineKeyboardMarkup(yes_or_no_glass_keys)
-                await bot.editMessageText(text=f"are you sure you want to delete '{query.data}' ", chat_id=update.effective_user.id, message_id=after_hashtag_comment, reply_markup=reply_yon_keyboards)
+                if query.data == 'want_delete' or query.data == 'regret_delete_comment':
+                    pass
+                else:
+                    await bot.editMessageText(text=f"are you sure you want to delete '{query.data}' ",
+                                              chat_id=update.effective_user.id, message_id=after_hashtag_comment,
+                                              reply_markup=reply_yon_keyboards)
 
         # check the query.data if it`s channel or not
         async def channel_validate(channel_name):
@@ -685,18 +697,21 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                                           chat_id=update.effective_user.id, message_id=last_step_message_id,
                                           reply_markup=inline_keyboards)
 
+    # in here we will remove the exactly comment which user clicked on it based from user cache
     if query.data == 'want_delete':
-        # in here we will remove the exactly comment user clicked on it based from user cache
-        logger.success(f"data that have to remove is {context.user_data.get(update.effective_user.id)}")
-        remove_comment = await delete_comment(context.user_data.get(update.effective_user.id))
+        logger.success(
+            f"data that have to remove is {context.user_data.get(update.effective_user.id)}")  # this will show log of success to continue other process
+        user_last_comment_data = context.user_data.get(update.effective_user.id)
+        remove_comment = await delete_comment(user_last_comment_data)  # this will delete comment
         if remove_comment:
-            logger.success(f"comment {context.user_data.get(update.effective_user.id)} has been deleted")
+            logger.success(f"comment {user_last_comment_data} has been deleted")
             comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
             inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
-            for comment in comments:
+            for comment in comments:  # for each data inside comment it will add inline keyboard and finally show them all
                 inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
             keyboards = InlineKeyboardMarkup(inline_keyboards)
-            user_last_stp_check = await check_last_step(update.effective_user.id)
+            user_last_stp_check = await check_last_step(
+                update.effective_user.id)  # we will check last step of user and get id of message
             try:
                 before_hashtag = None
                 after_hashtag = None
@@ -704,7 +719,11 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 without_hashtag = None
             except:
                 without_hashtag = user_last_stp_check
-            await bot.editMessageText(text=f"you can add or delete comment", chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=keyboards)
+            await bot.editMessageText(text=f"comment {user_last_comment_data} has been deleted", chat_id=update.effective_user.id,
+                                      message_id=after_hashtag)
+            await asyncio.sleep(3)
+            await bot.editMessageText(text=f"if you want to add comment send it as a message or if you want to delete message exist click on them", chat_id=update.effective_user.id,
+                                      message_id=after_hashtag, reply_markup=keyboards)
 
     if query.data == 'cancell':
         user_last_stp_check = await check_last_step(update.effective_user.id)
@@ -1016,9 +1035,10 @@ and if you want to get comments posted beside their links click on get excel fil
     if query.data == 'add-&-delete_comment':
         # get last message id
         message_id = query.message.message_id
-        comments = await get_all_comments()# this will get the comments inside database to make it visible for user
-        logger.info(f"all of comments are {comments}")# this log will show the back-end developers about comments
-        add_delete_comment = await add_or_delete_comment(update.effective_user.id, message_id) # update last_step of user
+        comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
+        logger.info(f"all of comments are {comments}")  # this log will show the back-end developers about comments
+        add_delete_comment = await add_or_delete_comment(update.effective_user.id,
+                                                         message_id)  # update last_step of user
         # if user data enter correctly we can add dataset of updates and make a log
         if add_delete_comment:
             logger.success(f"user {update.effective_user.username} updated last stp of add or delete comment")
@@ -1029,7 +1049,8 @@ and if you want to get comments posted beside their links click on get excel fil
         for comment in comments:
             inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
         keyboards = InlineKeyboardMarkup(inline_keyboards)
-        await bot.edit_message_text(text=f"please insert new comment", chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
+        await bot.edit_message_text(text=f"if you want to add comment send it as a message or if you want to delete message exist click on them", chat_id=update.effective_user.id,
+                                    message_id=message_id, reply_markup=keyboards)
 
 
 # async def get_user_tweets():
