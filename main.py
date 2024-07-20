@@ -15,7 +15,6 @@ from telegram import Update, Bot, InlineKeyboardButton, constants, InlineKeyboar
 from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 
 # region logs
-# todo: add more accurate and complete logging
 # Set up logging
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -39,8 +38,6 @@ cursor = connect.cursor()
 # region all command extracted
 
 # region random comment
-# todo: remove this list and get comment from sql with random
-# todo: add command to add comment to sql instead of editing message
 # todo: prevent writing repetitive functions
 
 # todo: add aiosqlite database to project
@@ -806,6 +803,20 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
         if before_hashtag == 'add_email':
+            logger.info(
+                f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
+            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
+                                ]
+            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.editMessageText(
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
+
+        # go to homepage if user is inside add-delete-comment section
+        if before_hashtag == 'add-delete-comment':
             logger.info(
                 f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
