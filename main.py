@@ -365,7 +365,6 @@ async def delete_comment(comment_name):
     except:
         return False
 
-
 # endregion
 
 # endregion
@@ -451,9 +450,8 @@ click on add comment 🎉 to add or delete comments
         await context.bot.send_message(update.effective_user.id, escape_characters_for_markdown(
             f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧"),
                                        parse_mode=constants.ParseMode.MARKDOWN_V2)
-
-
 # endregion
+
 
 # region message_handler
 # message the admin that we`ve found new post on Twitter
@@ -467,25 +465,25 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             # make last_stp data seperated and set it
             command_split, message_id_split = user_last_stp_check.split('#')
             if command_split == 'add_channel':
-                async def channel_validate(channel_name):
-                    if '@' in channel_name:
-                        return True
-                    else:
-                        return False
-
-                channel_validation = await channel_validate(update.message.text)
-
-                if channel_validation:
+                await bot.editMessageText(text=f"please wait generating...", chat_id=update.effective_user.id,
+                                          message_id=message_id_split)
+                channel_validate = await find_channel_id(update.message.text)
+                # async def channel_validate(channel_name):
+                #     if '@' in channel_name:
+                #         return True
+                #     else:
+                #         return False
+                #
+                # channel_validation = await channel_validate(update.message.text)
+                if channel_validate is not False:
                     # insert function below can insert channels that user send to us
                     async def Insert_channel(channel_name):
                         try:
-                            run_insertion = cursor.execute("INSERT INTO tweet_data(tweet_channel) VALUES (?)",
-                                                           (channel_name,))
+                            run_insertion = cursor.execute("INSERT INTO tweet_data(tweet_channel, tweet_channel_id) VALUES (?, ?)", (channel_name, channel_validate,))
                             connect.commit()
                             return True
                         except:
                             return False
-
                     insert_data_to_channel = await Insert_channel(update.message.text)
                     if insert_data_to_channel:
                         logger.success(f"user`s new channel name: {message_receive} added to database")
@@ -507,7 +505,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     logger.debug(f"user {update.effective_user.username} inserted wrong channel")
                     # this section will edit message and say the issue then change the keys
                     await bot.editMessageText(
-                        text=f"wrong format it must be like this @example \n note it must start with '@' sign",
+                        text=f"wrong format it must be like this @example \n note it must start with '@' sign or you entered channel that doesn`t exist",
                         chat_id=update.effective_user.id, message_id=message_id_split)
                     await asyncio.sleep(3)
                     # get all channels inside the database
