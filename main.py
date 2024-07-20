@@ -526,7 +526,8 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         keyboards = [
                             [InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
                             [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
-                            [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                            [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                            [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                         ]
                         inline_keyboards = InlineKeyboardMarkup(keyboards)
 
@@ -741,7 +742,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             logger.info(f"user redirected from homepage to homepage again")
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
@@ -753,7 +755,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         if without_hashtag == 'homepage':
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
@@ -766,7 +769,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add channel')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
@@ -779,7 +783,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add setting')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
@@ -793,7 +798,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 f'user {update.effective_user.username} cancelled and redirected to homepage from add change email')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
@@ -805,7 +811,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
                                 [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
@@ -1023,7 +1030,8 @@ do you want to change it or change the notification sending status
         await asyncio.sleep(4)
         keyboards = [[InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
                      [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
-                     [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")]
+                     [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
+                     [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                      ]
         inline_keyboards = InlineKeyboardMarkup(keyboards)
         await bot.editMessageText(text=f"""
