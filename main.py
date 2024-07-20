@@ -95,7 +95,8 @@ async def find_channel_id(channel_name):
         user_id = driver.find_element(By.ID, "user_id").text
 
         driver.quit()
-        return user_id
+        if user_id is not None:
+            return user_id
     except:
         return False
 # endregion
@@ -398,9 +399,8 @@ def escape_characters_for_markdown(text: str):
     result = result.replace("}", "\}")
     result = result.replace(">", "\>")
     return result
-
-
 # endregion
+
 
 # region start
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
@@ -653,6 +653,7 @@ and if you want to get comments posted beside their links click on get excel fil
             print(command)
 
 
+# todo: add all queries answer to project
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     logger.info(f"query data: {query.to_dict()} - {query.data}")
@@ -679,6 +680,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
             remove_status = await remove_channel(query.data)
             if remove_status:
+                await query.answer(text=f"channel name {query.data} has been deleted 💨🕳", show_alert=False)
                 # in here we will get last step id to edit message
                 user_last_stp_check = await check_last_step(update.effective_user.id)
                 last_step_message_id = user_last_stp_check.split('#')[1]
