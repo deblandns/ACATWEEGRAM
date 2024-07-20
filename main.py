@@ -326,6 +326,16 @@ async def insert_comment(comment):
         return False
 # endregion
 
+# region delete comment based on comment message
+async def delete_comment(comment_name):
+    try:
+        cursor.execute("DELETE FROM comments WHERE comment_title = ?", (comment_name,))
+        connect.commit()
+        return True
+    except:
+        return False
+# endregion
+
 # endregion
 
 # region bot
@@ -626,13 +636,16 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             if query.data == 'cancell':
                 pass
             else:
+                if query.data == 'want_delete' or query.data == 'regret_delete_comment':
+                    pass
+                else:
+                    context.user_data[update.effective_user.id] = query.data
                 yes_or_no_glass_keys = [
-                    [InlineKeyboardButton(text=f"yes 🚮", callback_data=f"want_to_delete_comment!{query.data}")],
+                    [InlineKeyboardButton(text=f"yes 🚮", callback_data=f"want_delete")],
                     [InlineKeyboardButton(text=f"no ↩", callback_data=f"regret_delete_comment")]
                 ]
                 reply_yon_keyboards = InlineKeyboardMarkup(yes_or_no_glass_keys)
                 await bot.editMessageText(text=f"are you sure you want to delete '{query.data}' ", chat_id=update.effective_user.id, message_id=after_hashtag_comment, reply_markup=reply_yon_keyboards)
-
 
         # check the query.data if it`s channel or not
         async def channel_validate(channel_name):
@@ -671,6 +684,27 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 await bot.editMessageText(text=f"channel name: {query.data} deleted ⭕",
                                           chat_id=update.effective_user.id, message_id=last_step_message_id,
                                           reply_markup=inline_keyboards)
+
+    if query.data == 'want_delete':
+        # in here we will remove the exactly comment user clicked on it based from user cache
+        logger.success(f"data that have to remove is {context.user_data.get(update.effective_user.id)}")
+        remove_comment = await delete_comment(context.user_data.get(update.effective_user.id))
+        if remove_comment:
+            logger.success(f"comment {context.user_data.get(update.effective_user.id)} has been deleted")
+            comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
+            inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
+            for comment in comments:
+                inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
+            keyboards = InlineKeyboardMarkup(inline_keyboards)
+            user_last_stp_check = await check_last_step(update.effective_user.id)
+            try:
+                before_hashtag = None
+                after_hashtag = None
+                before_hashtag, after_hashtag = user_last_stp_check.split('#')
+                without_hashtag = None
+            except:
+                without_hashtag = user_last_stp_check
+            await bot.editMessageText(text=f"you can add or delete comment", chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=keyboards)
 
     if query.data == 'cancell':
         user_last_stp_check = await check_last_step(update.effective_user.id)
@@ -982,8 +1016,8 @@ and if you want to get comments posted beside their links click on get excel fil
     if query.data == 'add-&-delete_comment':
         # get last message id
         message_id = query.message.message_id
-        comments = await get_all_comments() # this will get the comments inside database to make it visible for user
-        logger.info(f"all of comments are {comments}") # this log will show the back-end developers about comments
+        comments = await get_all_comments()# this will get the comments inside database to make it visible for user
+        logger.info(f"all of comments are {comments}")# this log will show the back-end developers about comments
         add_delete_comment = await add_or_delete_comment(update.effective_user.id, message_id) # update last_step of user
         # if user data enter correctly we can add dataset of updates and make a log
         if add_delete_comment:
