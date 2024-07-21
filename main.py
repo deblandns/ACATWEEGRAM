@@ -36,8 +36,8 @@ logger.info('bot started')
 # config database
 file_dir = os.path.dirname('database')
 db = os.path.join(file_dir, 'database/acatweegram.db')
-connect = sql.connect(db)
-cursor = connect.cursor()
+# connect = sql.connect(db)
+# cursor = connect.cursor()
 # endregion
 # region all command extracted
 
@@ -55,10 +55,12 @@ used_comments = []
 async def random_comment() -> str:
     logger.info('random comment generating runned')
     global used_comments
-    sql_get_random_comment = cursor.execute("SELECT * FROM comments ORDER BY RANDOM() LIMIT 1")
-    picked_comment = sql_get_random_comment.fetchone()
-    # used_comments.append(comment_picked)
-    return picked_comment[0]
+    async with aiosqlite.connect(db) as connect:
+        async with connect.cursor() as cursor:
+            sql_get_random_comment = await cursor.execute("SELECT * FROM comments ORDER BY RANDOM() LIMIT 1")
+            picked_comment = await sql_get_random_comment.fetchone()
+            # used_comments.append(comment_picked)
+            return picked_comment[0]
 
 
 # endregion
@@ -260,9 +262,11 @@ def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str =
 # get last_step and check it
 async def check_last_step(user_id):
     logger.info(f"last step try to check by user id : {user_id}")
-    last_step = cursor.execute("SELECT last_stp FROM ADMIN WHERE telegram_id = ? ", (user_id,))
-    last_stp_fetch = last_step.fetchone()
-    return last_stp_fetch[0]
+    async with aiosqlite.connect(db) as connect:
+        async with connect.cursor() as cursor:
+            last_step = await cursor.execute("SELECT last_stp FROM ADMIN WHERE telegram_id = ? ", (user_id,))
+            last_stp_fetch = await last_step.fetchone()
+            return last_stp_fetch[0]
 
 
 # endregion
@@ -273,15 +277,15 @@ async def check_last_step(user_id):
 async def update_last_step_start(userid, message_id):
     try:
         message_id_string = f"start_command#{message_id}"
-        insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ?  WHERE telegram_id = ?",
-                                          (message_id_string, userid))
-        connect.commit()
-        logger.success(f'last step update for user {userid} with message {message_id} started')
-        return True
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                insert_last_step = await cursor.execute("UPDATE ADMIN SET last_stp = ?  WHERE telegram_id = ?", (message_id_string, userid))
+                await connect.commit()
+            logger.success(f'last step update for user {userid} with message {message_id} started')
+            return True
     except:
         logger.warning(f"unable to update last step for user {userid}")
         return False
-
 
 # endregion
 
@@ -290,10 +294,12 @@ async def update_last_step_start(userid, message_id):
 # region add last step of homepage
 async def update_last_step_homepage(userid):
     try:
-        insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = 'homepage' WHERE telegram_id = ?", (userid,))
-        connect.commit()
-        logger.success(f"last step convert to homepage set for userid {userid}")
-        return True
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                insert_last_step = await cursor.execute("UPDATE ADMIN SET last_stp = 'homepage' WHERE telegram_id = ?", (userid,))
+                await connect.commit()
+                logger.success(f"last step convert to homepage set for userid {userid}")
+                return True
     except:
         logger.warning(f"unable to set step of homepage for userid {userid}")
         return False
@@ -305,11 +311,12 @@ async def update_last_step_homepage(userid):
 # add last step add channel
 async def update_last_step_add_channel(userid, message_id):
     try:
-        add_channel_message_last_step = f'add_channel#{message_id}'
-        insert_last_step = cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                          (add_channel_message_last_step, userid))
-        connect.commit()
-        return True
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                add_channel_message_last_step = f'add_channel#{message_id}'
+                insert_last_step = await cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (add_channel_message_last_step, userid))
+                await connect.commit()
+                return True
     except:
         return False
 
@@ -320,9 +327,11 @@ async def update_last_step_add_channel(userid, message_id):
 
 # region get all comments
 async def get_all_comments():
-    get_comments = cursor.execute("SELECT * FROM comments")
-    comments = get_comments.fetchall()
-    return comments
+    async with aiosqlite.connect(db) as connect:
+        async with connect.cursor() as cursor:
+            get_comments = await cursor.execute("SELECT * FROM comments")
+            comments = await get_comments.fetchall()
+            return comments
 
 
 # endregion
@@ -331,9 +340,11 @@ async def get_all_comments():
 async def add_or_delete_comment(user_id, message_id):
     try:
         f_str_add_del_comm = f"add-delete-comment#{message_id}"
-        cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (f_str_add_del_comm, user_id,))
-        connect.commit()
-        return True
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (f_str_add_del_comm, user_id,))
+                await connect.commit()
+                return True
     except:
         return False
 
@@ -343,9 +354,11 @@ async def add_or_delete_comment(user_id, message_id):
 # region add new comment into a database
 async def insert_comment(comment):
     try:
-        cursor.execute("INSERT INTO comments VALUES(?)", (comment,))
-        connect.commit()
-        return True
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                await cursor.execute("INSERT INTO comments VALUES(?)", (comment,))
+                await connect.commit()
+                return True
     except:
         return False
 
@@ -355,9 +368,11 @@ async def insert_comment(comment):
 # region delete comment based on comment message
 async def delete_comment(comment_name):
     try:
-        cursor.execute("DELETE FROM comments WHERE comment_title = ?", (comment_name,))
-        connect.commit()
-        return True
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                await cursor.execute("DELETE FROM comments WHERE comment_title = ?", (comment_name,))
+                await connect.commit()
+                return True
     except:
         return False
 
@@ -412,14 +427,16 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
         this function will get user data from self.user_id then response with True or False
         :return:bool
         """
-        admin_data = cursor.execute("SELECT * FROM ADMIN WHERE telegram_id = ?", (user_id,))
-        for user in admin_data:
-            admin_id = user[0]
-            if admin_id == str(user_id):
-                return True
-                return
-        else:
-            return False
+        async with aiosqlite.connect(db) as connect:
+                async with connect.cursor() as cursor:
+                    await cursor.execute("SELECT * FROM ADMIN WHERE telegram_id = ?", (user_id,))
+                    admin_data = await cursor.fetchone()
+                    print(admin_data)
+                    admin_id = admin_data[0]
+                    if admin_id == str(user_id):
+                        return True
+                    else:
+                        return False
 
     admin_check = await check_admin(user_id)
     # convert simple keys to inline keyboards when user click on /start or start bot
@@ -432,8 +449,7 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # endregion check admin class
     if admin_check:
         logger.success(f"user {user_id} is admin")
-        admin_greet_message = await context.bot.send_message(update.effective_user.id,
-                                                             text=escape_characters_for_markdown(f"""\
+        admin_greet_message = await context.bot.send_message(update.effective_user.id, text=escape_characters_for_markdown(f"""\
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
 ⚙ if you want to set gmail to get response from or change your data click on settings
 and if you want to get comments posted beside their links click on get excel file 📃
@@ -441,7 +457,7 @@ click on add comment 🎉 to add or delete comments
 """), reply_markup=inline_keyboards, parse_mode=constants.ParseMode.MARKDOWN_V2)
         last_step_update = await update_last_step_start(str(user_id), admin_greet_message['message_id'])
     else:
-        logger.info(f"user f{user_id} is not admin")
+        logger.info(f"user {user_id} is not admin")
         await context.bot.send_message(update.effective_user.id, escape_characters_for_markdown(
             f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧"),
                                        parse_mode=constants.ParseMode.MARKDOWN_V2)
@@ -474,17 +490,21 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     # insert function below can insert channels that user send to us
                     async def Insert_channel(channel_name):
                         try:
-                            run_insertion = cursor.execute("INSERT INTO tweet_data(tweet_channel, tweet_channel_id) VALUES (?, ?)", (channel_name, channel_validate,))
-                            connect.commit()
-                            return True
+                            async with aiosqlite.connect(db) as connect:
+                                async with connect.cursor() as cursor:
+                                    run_insertion = await cursor.execute("INSERT INTO tweet_data(tweet_channel, tweet_channel_id) VALUES (?, ?)", (channel_name, channel_validate,))
+                                    await connect.commit()
+                                    return True
                         except:
                             return False
                     insert_data_to_channel = await Insert_channel(update.message.text)
                     if insert_data_to_channel:
                         logger.success(f"user`s new channel name: {message_receive} added to database")
                         # get all channels inside the database
-                        run_get_channel = cursor.execute("SELECT tweet_channel FROM tweet_data")
-                        datas = run_get_channel.fetchall()
+                        async with aiosqlite.connect(db) as connect:
+                            async with connect.cursor() as cursor:
+                                run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
+                                datas = await run_get_channel.fetchall()
                         glassy_inline_keyboard_channels = [
                             [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                         if datas:
@@ -504,8 +524,10 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         chat_id=update.effective_user.id, message_id=message_id_split)
                     await asyncio.sleep(3)
                     # get all channels inside the database
-                    run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
-                    datas = run_get_channel.fetchall()
+                    async with aiosqlite.connect(db) as connect:
+                        async with connect.cursor() as cursor:
+                            run_get_channel = await cursor.execute(f"SELECT tweet_channel FROM tweet_data")
+                            datas = await run_get_channel.fetchall()
                     glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                     if datas:
                         for data in datas:
@@ -530,10 +552,11 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                 if email_validation_var:
                     async def change_gmail(id, gmail):
                         try:
-                            execute = cursor.execute(
-                                "UPDATE ADMIN SET email = ?, send_email = TRUE WHERE telegram_id = ?", (gmail, id,))
-                            connect.commit()
-                            return True
+                            async with aiosqlite.connect(db) as connect:
+                                async with connect.cursor() as cursor:
+                                    execute = await cursor.execute("UPDATE ADMIN SET email = ?, send_email = TRUE WHERE telegram_id = ?", (gmail, id,))
+                                    await connect.commit()
+                                    return True
                         except:
                             return False
 
@@ -585,11 +608,11 @@ and if you want to get comments posted beside their links click on get excel fil
                     # add email to database of user
                     async def add_email(id, gmail):
                         try:
-                            execute = cursor.execute(
-                                "UPDATE ADMIN SET email = ?, send_email = TRUE, send_email = TRUE WHERE telegram_id = ?",
-                                (gmail, id,))
-                            connect.commit()
-                            return True
+                            async with aiosqlite.connect(db) as connect:
+                                async with connect.cursor() as cursor:
+                                    execute = await cursor.execute("UPDATE ADMIN SET email = ?, send_email = TRUE, send_email = TRUE WHERE telegram_id = ?", (gmail, id,))
+                                    await connect.commit()
+                                    return True
                         except:
                             return False
 
@@ -667,9 +690,11 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             # Add logic to delete the channel from monitoring
             async def remove_channel(channel_name: str) -> bool:
                 try:
-                    cursor.execute("DELETE FROM tweet_data WHERE tweet_channel = ?", (channel_name,))
-                    connect.commit()
-                    return True
+                    async with aiosqlite.connect(db) as connect:
+                        async with connect.cursor() as cursor:
+                            await cursor.execute("DELETE FROM tweet_data WHERE tweet_channel = ?", (channel_name,))
+                            await connect.commit()
+                            return True
                 except:
                     return False
 
@@ -681,8 +706,10 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 last_step_message_id = user_last_stp_check.split('#')[1]
                 # edit last message after delete
                 # get all channels inside the database
-                run_get_channel = cursor.execute(f"SELECT tweet_channel FROM tweet_data")
-                datas = run_get_channel.fetchall()
+                async with aiosqlite.connect(db) as connect:
+                    async with connect.cursor() as cursor:
+                        run_get_channel = await cursor.execute(f"SELECT tweet_channel FROM tweet_data")
+                        datas = await run_get_channel.fetchall()
                 glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
                 if datas:
                     for data in datas:
@@ -869,9 +896,11 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
         async def change_notification_status(userid):
             try:
-                cursor.execute("UPDATE ADMIN SET send_email = TRUE WHERE telegram_id = ?", (userid,))
-                connect.commit()
-                return True
+                async with aiosqlite.connect(db) as connect:
+                    async with connect.cursor() as cursor:
+                        await cursor.execute("UPDATE ADMIN SET send_email = TRUE WHERE telegram_id = ?", (userid,))
+                        await connect.commit()
+                        return True
             except:
                 return False
 
@@ -902,9 +931,11 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         # turn email sending off
         async def TurnOffEmailSending(userid):
             try:
-                cursor.execute("UPDATE ADMIN SET send_email = FALSE WHERE telegram_id = ?", (userid,))
-                connect.commit()
-                return True
+                async with aiosqlite.connect(db) as connect:
+                    async with connect.cursor() as cursor:
+                        await cursor.execute("UPDATE ADMIN SET send_email = FALSE WHERE telegram_id = ?", (userid,))
+                        await connect.commit()
+                        return True
             except:
                 return False
 
@@ -934,10 +965,11 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         async def change_email_status(userid, message_id) -> bool:
             try:
                 message_id_last_Stp = f'change_email#{message_id}'
-                email_ch = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                          (message_id_last_Stp, userid))
-                connect.commit()
-                return True
+                async with aiosqlite.connect(db) as connect:
+                    async with connect.cursor() as cursor:
+                        email_ch = await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (message_id_last_Stp, userid))
+                        await connect.commit()
+                        return True
             except:
                 return False
 
@@ -956,10 +988,11 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         async def add_email_status(userid, message_id) -> bool:
             try:
                 f_string_message_id = f'add_email#{message_id}'
-                email_ch = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                          (f_string_message_id, userid,))
-                connect.commit()
-                return True
+                async with aiosqlite.connect(db) as connect:
+                    async with connect.cursor() as cursor:
+                        email_ch = await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (f_string_message_id, userid,))
+                        await connect.commit()
+                        return True
             except:
                 return False
 
@@ -979,8 +1012,10 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         message_id = query.message.message_id
 
         # Get all channels inside the database
-        run_get_channel = cursor.execute("SELECT tweet_channel FROM tweet_data")
-        datas = run_get_channel.fetchall()
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
+                datas = await run_get_channel.fetchall()
         glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩️", callback_data=f"cancell")]]
 
         if datas:
@@ -1016,17 +1051,20 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         async def update_last_step_setting(userid, message_id):
             try:
                 setting_last_step_change = f'setting#{message_id}'
-                insert_last_step = cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                                  (setting_last_step_change, userid,))
-                connect.commit()
-                return True
+                async with aiosqlite.connect(db) as connect:
+                    async with connect.cursor() as cursor:
+                        insert_last_step = await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (setting_last_step_change, userid,))
+                        await connect.commit()
+                        return True
             except:
                 return False
 
         # in this section we check user email wheter user have email inside database or not
         async def check_user_email(user_id):
-            command = cursor.execute("SELECT email, send_email FROM ADMIN WHERE telegram_id = ?", (user_id,))
-            email_data = cursor.fetchall()
+            async with aiosqlite.connect(db) as connect:
+                async with connect.cursor() as cursor:
+                    command = await cursor.execute("SELECT email, send_email FROM ADMIN WHERE telegram_id = ?", (user_id,))
+                    email_data = await cursor.fetchall()
             for data in email_data:
                 return data
 
@@ -1167,9 +1205,11 @@ and if you want to get comments posted beside their links click on get excel fil
 #             we need tweet channel to check which channel posted it :param tweet_channel:
 #             """
 #             # this variable will run sql command and get tweet_id number from tweet_data database based on channel name
-#             get_all_data_equal_to_tweet_channel = cursor.execute(f"SELECT tweet_id FROM tweet_data WHERE tweet_channel = '{tweet_channel}' ")
-#             tweet_sql_id = get_all_data_equal_to_tweet_channel.fetchall()[0][0]
-#             if tweet_sql_id == tweet_id:
+#             async with aiosqlite.connect(db) as connect:
+#                 async with connect.cursor() as cursor:
+#                   get_all_data_equal_to_tweet_channel = await cursor.execute(f"SELECT tweet_id FROM tweet_data WHERE tweet_channel = '{tweet_channel}' ")
+#                   tweet_sql_id = await get_all_data_equal_to_tweet_channel.fetchall()[0][0]
+#              if tweet_sql_id == tweet_id:
 #                 return True
 #             else:
 #                 return False
@@ -1188,9 +1228,11 @@ and if you want to get comments posted beside their links click on get excel fil
 #                 async def update_data_or_insert(tweet_channel, tweet_id, tweet_title, used_comment, tweet_link) -> bool:
 #                     try:
 #                         command = f"UPDATE tweet_data SET tweet_id = '{tweet_id}', tweet_title = '{tweet_title}', used_comment = '{used_comment}', tweet_link = '{tweet_link}' WHERE tweet_channel = '{tweet_channel}' "
-#                         cursor.execute(command)
-#                         connect.commit()
-#                         return True
+                        #   async with aiosqlite.connect(db) as connect:
+                        #     async with connect.cursor() as cursor:
+#                               await cursor.execute(command)
+#                               await connect.commit()
+#                               return True
 #                     except sql.Error as er:
 #                         print('SQLite error: %s' % (' '.join(er.args)))
 #                         print("Exception class is: ", er.__class__)
@@ -1202,9 +1244,11 @@ and if you want to get comments posted beside their links click on get excel fil
 #                                                    tweet_title=f'{tweet_title}', used_comment=f'{random_comment_text}',
 #                                                    tweet_link=f'{tweet_link}')
 #                 async def send_all_admin_ids():
-#                     admin_ids = cursor.execute("SELECT telegram_id, name, send_email, email FROM ADMIN")
-#                     data = admin_ids.fetchall()
-#                     return data
+                    #   async with aiosqlite.connect(db) as connect:
+                    #     async with connect.cursor() as cursor:
+#                           admin_ids = await cursor.execute("SELECT telegram_id, name, send_email, email FROM ADMIN")
+#                           data = await admin_ids.fetchall()
+#                           return data
 #
 #                 data = await send_all_admin_ids()
 #
