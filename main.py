@@ -307,9 +307,8 @@ async def update_last_step_add_channel(userid, message_id):
     try:
         async with aiosqlite.connect(db) as connect:
             async with connect.cursor() as cursor:
-                add_channel_message_last_step = f'add_channel#{message_id}'
-                insert_last_step = await cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                                        (add_channel_message_last_step, userid))
+                add_channel_message_last_step = f'choosing_channel_add_delete#{message_id}' # it was add_channel
+                insert_last_step = await cursor.execute(f"UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (add_channel_message_last_step, userid))
                 await connect.commit()
                 return True
     except:
@@ -360,7 +359,6 @@ async def insert_comment(comment):
 
 
 # endregion
-
 # region delete comment based on comment message
 async def delete_comment(comment_name):
     try:
@@ -452,28 +450,21 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
 
     admin_check = await check_admin(user_id)
     # convert simple keys to inline keyboards when user click on /start or start bot
-    keyboards = [[InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
-                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                 [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
-                 ]
+    keyboards = [[InlineKeyboardButton(text=f'𝕏 مدیریت کانال های توییتر 𝕏', callback_data=f'add-channel-start-key')],
+                 [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
+                 [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]]
     inline_keyboards = InlineKeyboardMarkup(keyboards)
     # endregion check admin class
     if admin_check:
         logger.success(f"user {user_id} is admin")
         admin_greet_message = await context.bot.send_message(update.effective_user.id,
-                                                             text=escape_characters_for_markdown(f"""\
-Hi {update.effective_user.username} 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-and if you want to get comments posted beside their links click on get excel file 📃
-click on add comment 🎉 to add or delete comments
-"""), reply_markup=inline_keyboards, parse_mode=constants.ParseMode.MARKDOWN_V2)
+                                                             text=escape_characters_for_markdown(f"""کاربر {update.effective_user.username} به ربات خوش آمدید🤑"""), reply_markup=inline_keyboards, parse_mode=constants.ParseMode.MARKDOWN_V2)
         last_step_update = await update_last_step_start(str(user_id), admin_greet_message['message_id'])
     else:
         logger.info(f"user {user_id} is not admin")
         await context.bot.send_message(update.effective_user.id, escape_characters_for_markdown(
             f"⚠ Hi you`re not admin dear user if you want to be admin please contact us via gmail: hoseinnysyan1385@gmail.com 📧"),
                                        parse_mode=constants.ParseMode.MARKDOWN_V2)
-
-
 # endregion
 
 
@@ -523,7 +514,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                                 run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
                                 datas = await run_get_channel.fetchall()
                         glassy_inline_keyboard_channels = [
-                            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                            [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
                         if datas:
                             for data in datas:
                                 glassy_inline_keyboard_channels.insert(0, [
@@ -545,7 +536,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         async with connect.cursor() as cursor:
                             run_get_channel = await cursor.execute(f"SELECT tweet_channel FROM tweet_data")
                             datas = await run_get_channel.fetchall()
-                    glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                    glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
                     if datas:
                         for data in datas:
                             glassy_inline_keyboard_channels.insert(0, [
@@ -561,7 +552,7 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                                               chat_id=update.effective_user.id, message_id=message_id_split)
                     await asyncio.sleep(3)
                     comments = await get_all_comments()
-                    inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
+                    inline_keyboards = [[InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
                     for comment in comments:
                         inline_keyboards.insert(0,
                                                 [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
@@ -621,7 +612,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                     async with connect.cursor() as cursor:
                         run_get_channel = await cursor.execute(f"SELECT tweet_channel FROM tweet_data")
                         datas = await run_get_channel.fetchall()
-                glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
+                glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
                 if datas:
                     for data in datas:
                         glassy_inline_keyboard_channels.insert(0, [
@@ -672,7 +663,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             await query.answer(f"comment name {user_last_comment_data} has been deleted", show_alert=True)
             logger.success(f"comment {user_last_comment_data} has been deleted")
             comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
-            inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
+            inline_keyboards = [[InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
             for comment in comments:  # for each data inside comment it will add inline keyboard and finally show them all
                 inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
             keyboards = InlineKeyboardMarkup(inline_keyboards)
@@ -708,38 +699,38 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
         if before_hashtag == 'homepage':
             logger.info(f"user redirected from homepage to homepage again")
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
+            inline_keyboards = [[InlineKeyboardButton(text=f"𝕏 مدیریت کانال های توییتر 𝕏", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
+                text=f"کاربر DEBLANDNS به ربات خوش آمدید🤑",
                 chat_id=update.effective_user.id,
                 message_id=query.message.message_id,
                 reply_markup=reply_keyboards)
 
         if without_hashtag == 'homepage':
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
+            inline_keyboards = [[InlineKeyboardButton(text=f"𝕏 مدیریت کانال های توییتر 𝕏", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
+                text=f"کاربر DEBLANDNS به ربات خوش آمدید🤑",
                 chat_id=update.effective_user.id,
                 message_id=query.message.message_id,
                 reply_markup=reply_keyboards)
 
         if before_hashtag == 'add_channel':
             logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add channel')
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
+            inline_keyboards = [[InlineKeyboardButton(text=f"𝕏 مدیریت کانال های توییتر 𝕏", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
+                text=f"کاربر DEBLANDNS به ربات خوش آمدید🤑",
                 chat_id=update.effective_user.id,
                 message_id=after_hashtag,
                 reply_markup=reply_keyboards)
@@ -747,19 +738,18 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         # go to homepage if user is inside add-delete-comment section
         if before_hashtag == 'add-delete-comment':
             logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
+            inline_keyboards = [[InlineKeyboardButton(text=f"𝕏 مدیریت کانال های توییتر 𝕏", callback_data='add-channel-start-key')],
+                                [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
+                                [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
+                text=f"کاربر DEBLANDNS به ربات خوش آمدید🤑",
                 chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
     if query.data == 'add-channel-start-key':
-        logger.info(
-            f"user {update.effective_user.username} with id {update.effective_user.id} clicked on add channel key")
-        await query.answer(text=f"channels must start with @ sign", show_alert=False)
+        logger.info(f"user {update.effective_user.username} with id {update.effective_user.id} clicked on add channel key")
+        await query.answer(text="channels must start with @ sign", show_alert=False)
         message_id = query.message.message_id
 
         # Get all channels inside the database
@@ -767,7 +757,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             async with connect.cursor() as cursor:
                 run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
                 datas = await run_get_channel.fetchall()
-        glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"back ↩️", callback_data=f"cancell")]]
+        glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
 
         if datas:
             for data in datas:
@@ -778,20 +768,15 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
 
             # Send message to page if database has channels
-            add_channel_message = await context.bot.send_message(
-                update.effective_user.id,
-                "send us channel name starting with '@' for example: 👉 @example",
-                reply_markup=inline_keyboard
-            )
-            last_step_update = await update_last_step_add_channel(str(update.effective_user.id),
-                                                                  add_channel_message['message_id'])
+            add_channel_message = await context.bot.send_message(update.effective_user.id, "🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", reply_markup=inline_keyboard)
+            last_step_update = await update_last_step_add_channel(str(update.effective_user.id),add_channel_message['message_id'])
         else:
             # Send message to page if database has no channels
-            cancell_button = [[InlineKeyboardButton(text=f"back ↩️", callback_data=f"cancell")]]
+            cancell_button = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
             rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
             add_channel_message = await context.bot.send_message(
                 update.effective_user.id,
-                "send us channel name starting with '@' for example: 👉 @example",
+f"🥸 لطفا یکی از گزینه های زیر را انتخاب کنید.",
                 reply_markup=rep_cancell_btn
             )
 
@@ -807,14 +792,14 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         await bot.editMessageText(text=f"here is your document you can open it with excel opener app 😁",
                                   chat_id=chat_id, message_id=message_id)
         await asyncio.sleep(4)
-        keyboards = [[InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
-                     [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                     [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
+        keyboards = [[InlineKeyboardButton(text=f'𝕏 مدیریت کانال های توییتر 𝕏', callback_data=f'add-channel-start-key')],
+                     [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
+                     [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
                      ]
         inline_keyboards = InlineKeyboardMarkup(keyboards)
         await bot.editMessageText(text=f"""
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-and if you want to get comments posted beside their links click on get excel file 📃
+and if you want to get comments posted beside their links click on 📥 دریافت اکسل 📥
 """, chat_id=chat_id, message_id=message_id, reply_markup=inline_keyboards)
 
     if query.data == 'add-&-delete_comment':
@@ -830,7 +815,7 @@ and if you want to get comments posted beside their links click on get excel fil
         else:
             logger.warning(f"user {update.effective_user.username} can not update the last step to add or delete")
         # list of inline keyboards that contain cancel and comments inside database
-        inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
+        inline_keyboards = [[InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
         for comment in comments:
             inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
         keyboards = InlineKeyboardMarkup(inline_keyboards)
@@ -852,7 +837,7 @@ and if you want to get comments posted beside their links click on get excel fil
         else:
             logger.warning(f"user {update.effective_user.username} can not update the last step to add or delete")
         # list of inline keyboards that contain cancel and comments inside database
-        inline_keyboards = [[InlineKeyboardButton(f"back ↩", callback_data='cancell')]]
+        inline_keyboards = [[InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
         for comment in comments:
             inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}")])
         keyboards = InlineKeyboardMarkup(inline_keyboards)
