@@ -9,6 +9,7 @@ import regex as reg
 import requests as re
 import aiosqlite
 import pandas as pd
+import functools
 from loguru import logger
 from selenium import webdriver
 from selenium.webdriver import Keys
@@ -17,8 +18,15 @@ from selenium.webdriver.chrome.options import Options
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from telegram import Update, Bot, InlineKeyboardButton, constants, InlineKeyboardMarkup, User
-from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, \
-    filters
+from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
+
+# region logs type
+info_log = logger.info
+debug_log = logger.debug
+warning_log = logger.warning
+tracer_log = logger.trace
+success_log = logger.success
+# endregion
 
 # region logs
 # Set up logging
@@ -42,6 +50,27 @@ db = os.path.join(file_dir, 'database/acatweegram.db')
 # cursor = connect.cursor()
 # endregion
 # region all command extracted
+
+# region check_usernewdata for updating last_stp and user username(as decorator)
+def DataCheckDecorator(func):
+    @functools.wraps(func)
+    async def wrapper(*args, **kwargs):
+        # extract the data we need like userid and username
+        update = args[0]
+        userid = update.effective_user.id
+        username = update.effective_user.username
+        # print_data to see if it`s working well
+        async with aiosqlite.connect(db) as connect:
+            async with connect.cursor() as cursor:
+                try:
+                    await cursor.execute("INSERT INTO ADMIN(telegram_id, name) VALUES(?, ?) ON CONFLICT(telegram_id) DO UPDATE SET name = ? WHERE telegram_id = ?", (str(userid), username, username, str(userid)))
+                    await connect.commit()
+                except Exception as upsert_decorator_error:
+                    debug_log(str(upsert_decorator_error))
+        return await func(*args, **kwargs)
+    return wrapper
+
+# endregion
 
 # region random comment
 # todo: prevent writing repetitive functions
@@ -287,8 +316,7 @@ async def update_last_step_start(userid, message_id):
         message_id_string = f"start_command#{message_id}"
         async with aiosqlite.connect(db) as connect:
             async with connect.cursor() as cursor:
-                insert_last_step = await cursor.execute("UPDATE ADMIN SET last_stp = ?  WHERE telegram_id = ?",
-                                                        (message_id_string, userid))
+                insert_last_step = await cursor.execute("UPDATE ADMIN SET last_stp = ?  WHERE telegram_id = ?", (message_id_string, userid))
                 await connect.commit()
             logger.success(f'last step update for user {userid} with message {message_id} started')
             return True
@@ -442,6 +470,7 @@ def escape_characters_for_markdown(text: str):
 
 # region start
 # start section in here we save the all codes that will happen when user start the bot and everything in starting handle from here
+@DataCheckDecorator
 async def start(update: Update, context: CallbackContext) -> CallbackContext:
     # this variable will get the user id then we will check whether is admin or not
     user_id = update.effective_user.id
@@ -479,7 +508,7 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
         logger.success(f"user {user_id} is admin")
         admin_greet_message = await context.bot.send_message(update.effective_user.id,
                                                              text=escape_characters_for_markdown(f"""\
-Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
+Hi {update.effective_user.username} 🧨 if you want to add channel to get data from and auto comment click on add_channel 
 ⚙ if you want to set gmail to get response from or change your data click on settings
 and if you want to get comments posted beside their links click on get excel file 📃
 click on add comment 🎉 to add or delete comments
@@ -497,6 +526,7 @@ click on add comment 🎉 to add or delete comments
 
 # region message_handler
 # message the admin that we`ve found new post on Twitter
+@DataCheckDecorator
 async def message_admin(update: Update, context: CallbackContext) -> None:
     message_receive = update.message.text
     logger.info(f"user {update.effective_user.username} inserted {message_receive}")
@@ -710,6 +740,7 @@ and if you want to get comments posted beside their links click on get excel fil
 
 
 # todo: add all queries answer to project
+@DataCheckDecorator
 async def call_back_notifications(update: Update, context: CallbackContext) -> None:
     query = update.callback_query
     logger.info(f"query data: {query.to_dict()} - {query.data}")
