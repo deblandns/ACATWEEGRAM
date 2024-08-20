@@ -3,7 +3,6 @@ import sys
 import logging
 import os.path
 import random
-import smtplib as sm
 import sqlite3 as sql
 import regex as reg
 import requests as re
@@ -15,8 +14,6 @@ from selenium import webdriver
 from selenium.webdriver import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
 from telegram import Update, Bot, InlineKeyboardButton, constants, InlineKeyboardMarkup, User
 from telegram.ext import CallbackContext, ApplicationBuilder, CommandHandler, MessageHandler, CallbackQueryHandler, filters
 
@@ -248,45 +245,6 @@ async def send_comment(text: str, post_id: str, channel_name: str) -> str:
 
 # endregion
 
-
-# region email_sender function
-def user_email_sending_of_tweets_data(user_name: str = None, channel_name: str = None, email: str = None,
-                                      random_comment_text: str = None, tweet_title: str = None, tweet_id: str = None,
-                                      telegram_id=None):
-    logger.info("email sending function started")
-    content = f"""
-                Hi user: {user_name} 🌟 
-            I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
-                            \n
-            to channel: {channel_name}                
-
-            and tweet id was: 🔢 {tweet_id}
-                """
-
-    sender = 'eshopprojectdiardev@gmail.com'
-    recipient = email
-
-    # Create the email message
-    msg = MIMEMultipart()
-    msg['From'] = sender
-    msg['To'] = recipient
-    msg['Subject'] = f"{user_name} sent the problem"
-
-    # Attach the message body
-    msg.attach(MIMEText(content, 'plain', 'utf-8'))
-
-    # Send the email
-    try:
-        with sm.SMTP('smtp.gmail.com', 587) as mail:
-            mail.ehlo()
-            mail.starttls()
-            mail.login(sender, 'snqrxicwhdulzyfs')
-            mail.sendmail(sender, recipient, msg.as_string())
-    except Exception as e:
-        print(f"Failed to send email: {e}")
-
-
-# endregion
 # endregion
 
 # region sql last_step functions
@@ -495,7 +453,6 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
     admin_check = await check_admin(user_id)
     # convert simple keys to inline keyboards when user click on /start or start bot
     keyboards = [[InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
-                 [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
                  [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
                  [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                  ]
@@ -506,7 +463,6 @@ async def start(update: Update, context: CallbackContext) -> CallbackContext:
         admin_greet_message = await context.bot.send_message(update.effective_user.id,
                                                              text=escape_characters_for_markdown(f"""\
 Hi {update.effective_user.username} 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-⚙ if you want to set gmail to get response from or change your data click on settings
 and if you want to get comments posted beside their links click on get excel file 📃
 click on add comment 🎉 to add or delete comments
 """), reply_markup=inline_keyboards, parse_mode=constants.ParseMode.MARKDOWN_V2)
@@ -598,117 +554,6 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                     await bot.editMessageText(text=f"please insert channel that you want to auto comment on it",
                                               chat_id=update.effective_user.id, message_id=message_id_split,
                                               reply_markup=inline_keyboards)
-            if command_split == 'setting':
-                logger.info(f"user trying to send message when user is in setting last step")
-                pass
-            if command_split == 'change_email':
-                async def email_validation(email):
-                    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-                    if reg.match(regex, email):
-                        return True
-                    else:
-                        return False
-
-                email_validation_var = await email_validation(update.message.text)
-                if email_validation_var:
-                    async def change_gmail(id, gmail):
-                        try:
-                            async with aiosqlite.connect(db) as connect:
-                                async with connect.cursor() as cursor:
-                                    execute = await cursor.execute(
-                                        "UPDATE ADMIN SET email = ?, send_email = TRUE WHERE telegram_id = ?",
-                                        (gmail, id,))
-                                    await connect.commit()
-                                    return True
-                        except:
-                            return False
-
-                    is_added = await change_gmail(update.effective_user.id, update.message.text)
-                    if is_added:
-                        logger.success(
-                            f"user {update.effective_user.username} with id {update.effective_user.id} inserted new email name {update.message.text} to database")
-                        await bot.editMessageText(text=f"your email name: {update.message.text} inserted thanks ❤",
-                                                  chat_id=update.effective_user.id, message_id=message_id_split)
-                        await asyncio.sleep(3)
-                        keyboards = [
-                            [InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
-                            [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
-                            [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                            [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
-                        ]
-                        inline_keyboards = InlineKeyboardMarkup(keyboards)
-
-                        last_step_update = await update_last_step_homepage(str(update.effective_user.id))
-                        await bot.editMessageText(text=f"""
-Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-⚙ if you want to set gmail to get response from or change your data click on settings
-and if you want to get comments posted beside their links click on get excel file 📃
-""", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=inline_keyboards)
-
-
-                else:
-                    logger.warning(
-                        f"user {update.effective_user.username} has insert the wrong format of email it was: {update.message.text}")
-                    await bot.editMessageText(
-                        text=f"please enter the right format of email example: \n\n youremail@gmail.com",
-                        chat_id=update.effective_user.id, message_id=message_id_split)
-                    await asyncio.sleep(7)
-                    await bot.editMessageText(text=f"please enter you email address",
-                                              chat_id=update.effective_user.id,
-                                              message_id=message_id_split)
-            if command_split == 'add_email':
-                # validation of input
-                async def email_validation(email):
-                    regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-                    if reg.match(regex, email):
-                        return True
-                    else:
-                        return False
-
-                # check the validation
-                email_validation_var = await email_validation(update.message.text)
-                if email_validation_var:
-                    # add email to database of user
-                    async def add_email(id, gmail):
-                        try:
-                            async with aiosqlite.connect(db) as connect:
-                                async with connect.cursor() as cursor:
-                                    execute = await cursor.execute(
-                                        "UPDATE ADMIN SET email = ?, send_email = TRUE, send_email = TRUE WHERE telegram_id = ?",
-                                        (gmail, id,))
-                                    await connect.commit()
-                                    return True
-                        except:
-                            return False
-
-                    is_added = await add_email(update.effective_user.id, update.message.text)
-                    if is_added:
-                        logger.success(f"user {update.effective_user.username} inserted it`s first email to database")
-                        last_step_update = await update_last_step_homepage(str(update.effective_user.id))
-                        inline_keyboards = [
-                            [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
-                            [InlineKeyboardButton(
-                                text=f"Turn Notification Off 🔕",
-                                callback_data=f"notification_off")],
-                            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
-                        ]
-                        reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
-                        await bot.editMessageText(text=f"email name: {update.message.text} has been added",
-                                                  chat_id=update.effective_user.id, message_id=message_id_split,
-                                                  reply_markup=reply_keyboard_markup)
-                else:
-                    logger.debug(f"user {update.effective_user.username} inserted wrong email for the first time")
-                    await bot.editMessageText(
-                        text=f"your entered wrong email the correct format is 'youremail@gmail.com'\n note: email must have '@' sign and end up with '.com' or other suffixes ",
-                        chat_id=update.effective_user.id, message_id=message_id_split)
-                    await asyncio.sleep(7)
-                    cancell_glass_keyboard = [[InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
-                    reply_markup_key = InlineKeyboardMarkup(cancell_glass_keyboard)
-                    await bot.editMessageText(text=f"please enter your email address again",
-                                              chat_id=update.effective_user.id,
-                                              message_id=message_id_split,
-                                              reply_markup=reply_markup_key
-                                              )
             if command_split == 'add-delete-comment':
                 is_insert = await insert_comment(update.message.text)
                 if is_insert:
@@ -794,24 +639,27 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             before_hashtag = None
             after_hashtag = None
             without_hashtag = last_step_checked
+
         # give quick yes or no after user clicked on comment that want
-        if before_hashtag_comment == "add-delete-comment":
-            if query.data == 'want_delete' or query.data == 'regret_delete_comment':
-                pass
+        try:
+            if before_hashtag_comment == "add-delete-comment":
+                if query.data == 'want_delete' or query.data == 'regret_delete_comment':
+                    pass
+                else:
+                    context.user_data[update.effective_user.id] = query.data
+                yes_or_no_glass_keys = [
+                    [InlineKeyboardButton(text=f"yes 🚮", callback_data=f"want_delete")],
+                    [InlineKeyboardButton(text=f"no ↩", callback_data=f"regret_delete_comment")]]
+                reply_yon_keyboards = InlineKeyboardMarkup(yes_or_no_glass_keys)
+                if query.data == 'want_delete' or query.data == 'regret_delete_comment' or query.data == 'cancell':
+                    pass
+                else:
+                    await bot.editMessageText(text=f"are you sure you want to delete '{query.data}' ",
+                                              chat_id=update.effective_user.id, message_id=after_hashtag_comment,
+                                              reply_markup=reply_yon_keyboards)
             else:
-                context.user_data[update.effective_user.id] = query.data
-            yes_or_no_glass_keys = [
-                [InlineKeyboardButton(text=f"yes 🚮", callback_data=f"want_delete")],
-                [InlineKeyboardButton(text=f"no ↩", callback_data=f"regret_delete_comment")]
-            ]
-            reply_yon_keyboards = InlineKeyboardMarkup(yes_or_no_glass_keys)
-            if query.data == 'want_delete' or query.data == 'regret_delete_comment' or query.data == 'cancell':
                 pass
-            else:
-                await bot.editMessageText(text=f"are you sure you want to delete '{query.data}' ",
-                                          chat_id=update.effective_user.id, message_id=after_hashtag_comment,
-                                          reply_markup=reply_yon_keyboards)
-        else:
+        except:
             pass
 
     # in here we will remove the exactly comment which user clicked on it based from user cache
@@ -861,26 +709,24 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         if before_hashtag == 'homepage':
             logger.info(f"user redirected from homepage to homepage again")
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
                                 [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
                 chat_id=update.effective_user.id,
                 message_id=query.message.message_id,
                 reply_markup=reply_keyboards)
 
         if without_hashtag == 'homepage':
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
                                 [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
                 chat_id=update.effective_user.id,
                 message_id=query.message.message_id,
                 reply_markup=reply_keyboards)
@@ -888,190 +734,27 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         if before_hashtag == 'add_channel':
             logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add channel')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
                                 [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
                 chat_id=update.effective_user.id,
                 message_id=after_hashtag,
                 reply_markup=reply_keyboards)
-
-        if before_hashtag == 'setting':
-            logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add setting')
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
-                                ]
-            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
-                chat_id=update.effective_user.id,
-                message_id=after_hashtag,
-                reply_markup=reply_keyboards)
-
-        if before_hashtag == 'change_email':
-            logger.info(
-                f'user {update.effective_user.username} cancelled and redirected to homepage from add change email')
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
-                                ]
-            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
-                chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
-
-        if before_hashtag == 'add_email':
-            logger.info(
-                f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
-            inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
-                                [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
-                                ]
-            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
-                chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
         # go to homepage if user is inside add-delete-comment section
         if before_hashtag == 'add-delete-comment':
-            logger.info(
-                f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
+            logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
             inline_keyboards = [[InlineKeyboardButton(text=f"add channel 🌐", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"setting ⚙", callback_data='setting-keyboard-glass-key')],
                                 [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
                                 [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                                 ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
-                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ⚙️ if you want to set gmail to get response from or change your data click on settings",
+                text=f"Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel ",
                 chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
-
-    # this condition will choose True inside database for sending email
-    if query.data == 'notification_turn_on':
-        logger.success(f"user {update.effective_user.username} changed notification status to on")
-        user_last_stp_check = await check_last_step(update.effective_user.id)
-
-        last_stp_message_id = user_last_stp_check.split("#")[1]
-
-        async def change_notification_status(userid):
-            try:
-                async with aiosqlite.connect(db) as connect:
-                    async with connect.cursor() as cursor:
-                        await cursor.execute("UPDATE ADMIN SET send_email = TRUE WHERE telegram_id = ?", (userid,))
-                        await connect.commit()
-                        return True
-            except:
-                return False
-
-        sending_email_turn_on = await change_notification_status(update.effective_user.id)
-        inline_keyboards = [
-            [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
-            [InlineKeyboardButton(text=f"Turn notification off 🔕",
-                                  callback_data='notification_off')],
-            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
-        ]
-        reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
-        if sending_email_turn_on:
-            await query.answer(f"email sending turned on", show_alert=False, cache_time=3)
-            logger.success(f"user {update.effective_user.username} successfuly changed the notification status to on")
-            await context.bot.editMessageText(text=f"now you can get notified via email 🔔",
-                                              chat_id=update.effective_user.id, message_id=last_stp_message_id,
-                                              reply_markup=reply_keyboard_markup)
-        else:
-            logger.warning(f"user {update.effective_user.username} can`t change the email sending notification")
-            await context.bot.send_message(update.effective_user.id,
-                                           f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
-
-    if query.data == 'notification_off':
-        user_last_stp_check = await check_last_step(update.effective_user.id)
-
-        last_stp_message_id = user_last_stp_check.split("#")[1]
-
-        # turn email sending off
-        async def TurnOffEmailSending(userid):
-            try:
-                async with aiosqlite.connect(db) as connect:
-                    async with connect.cursor() as cursor:
-                        await cursor.execute("UPDATE ADMIN SET send_email = FALSE WHERE telegram_id = ?", (userid,))
-                        await connect.commit()
-                        return True
-            except:
-                return False
-
-        sending_email_turn_off = await TurnOffEmailSending(update.effective_user.id)
-        inline_keyboards = [
-            [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
-            [InlineKeyboardButton(text=f"Turn notification On 🔔",
-                                  callback_data='notification_turn_on')],
-            [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
-        ]
-        reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
-        if sending_email_turn_off:
-            await query.answer(f"email sending turned off", show_alert=False)
-            logger.success(f"user {update.effective_user.username} changed the notification status to off")
-            await context.bot.editMessageText(text=f"now your notification sending status is off 🔕",
-                                              chat_id=update.effective_user.id, message_id=last_stp_message_id,
-                                              reply_markup=reply_keyboard_markup)
-        else:
-            logger.warning(f"user {update.effective_user.username} change the notification status to off")
-            await context.bot.send_message(update.effective_user.id,
-                                           f"may you don`t have any admin account or other problem please contact us via email : hoseinnsyan1385@gmail.com")
-
-    if query.data == 'change_email':
-        message_id = query.message.message_id
-
-        # in there we will change the last step to identify user status
-        async def change_email_status(userid, message_id) -> bool:
-            try:
-                message_id_last_Stp = f'change_email#{message_id}'
-                async with aiosqlite.connect(db) as connect:
-                    async with connect.cursor() as cursor:
-                        email_ch = await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                                        (message_id_last_Stp, userid))
-                        await connect.commit()
-                        return True
-            except:
-                return False
-
-        inline_keyboards = [[InlineKeyboardButton('back ↩', callback_data='cancell')]]
-        reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-        edit_email_message = await bot.editMessageText(text=f"insert your new email address 📨",
-                                                       chat_id=update.effective_user.id,
-                                                       message_id=message_id,
-                                                       reply_markup=reply_keyboards
-                                                       )
-        edit_email = await change_email_status(update.effective_user.id, edit_email_message['message_id'])
-
-    if query.data == 'add_email':
-        message_id = query.message.message_id
-
-        async def add_email_status(userid, message_id) -> bool:
-            try:
-                f_string_message_id = f'add_email#{message_id}'
-                async with aiosqlite.connect(db) as connect:
-                    async with connect.cursor() as cursor:
-                        email_ch = await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                                        (f_string_message_id, userid,))
-                        await connect.commit()
-                        return True
-            except:
-                return False
-
-        inline_keyboard = [[InlineKeyboardButton(text='back ↩', callback_data='cancell')]]
-        reply_keyboards = InlineKeyboardMarkup(inline_keyboard)
-        add_email_message = await bot.editMessageText(
-            text=f"now insert email you want to enter for the first time 📩 \n note: ⚡ it must has '@' sign and end up with '.com' ",
-            chat_id=update.effective_user.id,
-            message_id=message_id,
-            reply_markup=reply_keyboards)
-        add_email = await add_email_status(update.effective_user.id, add_email_message['message_id'])
 
     if query.data == 'add-channel-start-key':
         logger.info(
@@ -1112,62 +795,6 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 reply_markup=rep_cancell_btn
             )
 
-    if query.data == 'setting-keyboard-glass-key':
-        logger.info(
-            f"user {update.effective_user.username} clicked on setting section with user_id {update.effective_user.id} ")
-
-        # add last step
-        async def update_last_step_setting(userid, message_id):
-            try:
-                setting_last_step_change = f'setting#{message_id}'
-                async with aiosqlite.connect(db) as connect:
-                    async with connect.cursor() as cursor:
-                        insert_last_step = await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
-                                                                (setting_last_step_change, userid,))
-                        await connect.commit()
-                        return True
-            except:
-                return False
-
-        # in this section we check user email wheter user have email inside database or not
-        async def check_user_email(user_id):
-            async with aiosqlite.connect(db) as connect:
-                async with connect.cursor() as cursor:
-                    command = await cursor.execute("SELECT email, send_email FROM ADMIN WHERE telegram_id = ?",
-                                                   (user_id,))
-                    email_data = await cursor.fetchall()
-            for data in email_data:
-                return data
-
-        # if we check the user email we based on what we need will send message
-        email = await check_user_email(update.effective_user.id)
-        if email[0]:
-            logger.success(
-                f"user {update.effective_user.username} with id {update.effective_user.id} have email inside database")
-            inline_keyboards = [
-                [InlineKeyboardButton(text=f"change email📝", callback_data=f"change_email")],
-                [InlineKeyboardButton(
-                    text=f"{'Turn notification On 🔔' if email[1] == 0 else 'Turn notification Off 🔕'}",
-                    callback_data=f"{'notification_turn_on' if email[1] == 0 else 'notification_off'}")],
-                [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]
-            ]
-            reply_keyboard_markup = InlineKeyboardMarkup(inline_keyboards)
-            message_with_email = await bot.send_message(update.effective_user.id, f"""
-        this is your email: {email[0]}
-do you want to change it or change the notification sending status
-                    """, reply_markup=reply_keyboard_markup)
-            last_step_update = await update_last_step_setting(str(update.effective_user.id),
-                                                              message_with_email['message_id'])
-        else:
-            logger.info(
-                f"user {update.effective_user.username} with id {update.effective_user.id} has no email so user have to add")
-            add_email_inline_keyboard = [[InlineKeyboardButton(text=f"add email 📩", callback_data=f"add_email")],
-                                         [InlineKeyboardButton(text=f"back ↩", callback_data=f"cancell")]]
-            reply_inline_keyboards = InlineKeyboardMarkup(add_email_inline_keyboard)
-            message_without_email = await bot.send_message(chat_id=update.effective_user.id,
-                                                           text=f"please enter your email it must have '@' sign and end with '.com'",
-                                                           reply_markup=reply_inline_keyboards)
-            last_step_update = await update_last_step_setting(str(update.effective_user.id), ['message_id'])
     # get excel file and send it to user whom want this file to be sended
     if query.data == 'get_excel_file':
         logger.success(
@@ -1181,14 +808,12 @@ do you want to change it or change the notification sending status
                                   chat_id=chat_id, message_id=message_id)
         await asyncio.sleep(4)
         keyboards = [[InlineKeyboardButton(text=f'add channel 🌐', callback_data=f'add-channel-start-key')],
-                     [InlineKeyboardButton(text=f"setting ⚙", callback_data=f"setting-keyboard-glass-key")],
                      [InlineKeyboardButton(text=f"get excel file 📃", callback_data=f"get_excel_file")],
                      [InlineKeyboardButton(text=f"add comment 🎉", callback_data=f"add-&-delete_comment")]
                      ]
         inline_keyboards = InlineKeyboardMarkup(keyboards)
         await bot.editMessageText(text=f"""
 Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-⚙ if you want to set gmail to get response from or change your data click on settings
 and if you want to get comments posted beside their links click on get excel file 📃
 """, chat_id=chat_id, message_id=message_id, reply_markup=inline_keyboards)
 
@@ -1325,7 +950,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #                 async def send_all_admin_ids():
 #                     async with aiosqlite.connect(db) as connect:
 #                         async with connect.cursor() as cursor:
-#                             admin_ids = await cursor.execute("SELECT telegram_id, name, send_email, email FROM ADMIN")
+#                             admin_ids = await cursor.execute("SELECT telegram_id, name FROM ADMIN")
 #                             data = await admin_ids.fetchall()
 #                             return data
 #
@@ -1359,19 +984,6 @@ and if you want to get comments posted beside their links click on get excel fil
 # and tweet id was: 🔢 {tweet_id}
 # \n
 # """, disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
-#                 # if user in it`s setting turn email sending true we can send user notification from email also
-#                 if id[2]:
-#                     user_email_sending_of_tweets_data(user_name=f"{id[1]}", channel_name=f"{channel_name}",
-#                                                       email=f"{id[3]}", random_comment_text=f"{random_comment_text}",
-#                                                       tweet_title=f'{tweet_title}', tweet_id=f"{tweet_id}")
-#                     if user_email_sending_of_tweets_data:
-#                         logger.success('email has been send')
-#                         await bot.send_message(chat_id=f"{id[0]}",
-#                                                text=f"we`ve sent you the email address because you gave us that permission 📧",
-#                                                disable_web_page_preview=True)
-#                     else:
-#                         await bot.send_message(chat_id=f"{id[0]}",
-#                                                text=f"we can`t send you email notification that`s may because you ent us wrong email address")
 #                 else:
 #                     pass
 #             except:
