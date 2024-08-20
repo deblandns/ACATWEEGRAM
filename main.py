@@ -69,7 +69,6 @@ def DataCheckDecorator(func):
                     debug_log(str(upsert_decorator_error))
         return await func(*args, **kwargs)
     return wrapper
-
 # endregion
 
 # region random comment
@@ -131,8 +130,6 @@ async def find_channel_id(channel_name):
             return user_id
     except:
         return False
-
-
 # endregion
 
 # region send_comment
@@ -1337,6 +1334,7 @@ and if you want to get comments posted beside their links click on get excel fil
 #                 if save_data:
 #                     row = {
 #                         'text': [f'{random_comment_text}'],
+#                         'channel_name': [f'{channel_name}'],
 #                         'link': [f'{tweet_link}'],
 #                     }
 #                     df = pd.DataFrame(row)
