@@ -48,6 +48,7 @@ db = os.path.join(file_dir, 'database/acatweegram.db')
 # endregion
 # region all command extracted
 
+
 # region check_usernewdata for updating last_stp and user username(as decorator)
 def DataCheckDecorator(func):
     @functools.wraps(func)
@@ -533,15 +534,15 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                         async with connect.cursor() as cursor:
                             run_get_channel = await cursor.execute(f"SELECT tweet_channel FROM tweet_data")
                             datas = await run_get_channel.fetchall()
-                    glassy_inline_keyboard_channels = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+                    glassy_inline_keyboard_channels = [
+                        [InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],
+                        [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
                     if datas:
                         for data in datas:
                             glassy_inline_keyboard_channels.insert(0, [
                                 InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
                         inline_keyboards = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
-                    await bot.editMessageText(text=f"please insert channel that you want to auto comment on it",
-                                              chat_id=update.effective_user.id, message_id=message_id_split,
-                                              reply_markup=inline_keyboards)
+                    await bot.editMessageText(text=f"🥸 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=inline_keyboards)
             if command_split == 'add-delete-comment':
                 is_insert = await insert_comment(update.message.text)
                 if is_insert:
@@ -680,6 +681,23 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 pass
         except:
             pass
+    # if user clicked on add channel from source channels lists
+    if query.data == "add_channel":
+        try:
+            async with aiosqlite.connect(db) as connect:
+                async with connect.cursor() as cursor:
+                    string_stp_addchannel = f"add_channel#{query.message.message_id}"
+                    await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (string_stp_addchannel, str(update.effective_user.id)))
+                    await connect.commit()
+                    try_update_stp = True
+        except Exception as update_last_stp_error:
+            debug_log(str(update_last_stp_error))
+            try_update_stp = False
+        if try_update_stp:
+            inline_keyboard = [[InlineKeyboardButton(text=f'➜ بازگشت', callback_data=f"cancell")]]
+            reply_key = InlineKeyboardMarkup(inline_keyboard)
+            await context.bot.editMessageText(text=f"💁‍♂ لطفا آیدی کانال مورد نظر خود را به صورت @channelname ارسال کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_key)
+
     # if user choosed no to and regret of deleting channel
     if query.data == "choosed_no":
         async with aiosqlite.connect(db) as connect:
@@ -694,6 +712,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         keys = InlineKeyboardMarkup(inline_keys)
         await bot.editMessageText(text="📣 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=after_hashtag_comment, reply_markup=keys)
 
+    # if user choosed yes that user want to delete the channel from database all processing will go below
     if query.data == "choosed_yes":
         try:
             async with aiosqlite.connect(db) as connect:
@@ -726,7 +745,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
 
                 # Send message to page if database has channels
-                add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=message_id, reply_markup=inline_keyboard)
+                add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=message_id, reply_markup=inline_keyboard)
                 last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
             else:
                 # Send message to page if database has no channels
@@ -833,16 +852,29 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
         if before_hashtag == 'add_channel':
             logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add channel')
-            inline_keyboards = [[InlineKeyboardButton(text=f"𝕏 مدیریت کانال های توییتر 𝕏", callback_data='add-channel-start-key')],
-                                [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
-                                [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
-                                ]
-            reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.editMessageText(
-                text=f"کاربر DEBLANDNS به ربات خوش آمدید🤑",
-                chat_id=update.effective_user.id,
-                message_id=after_hashtag,
-                reply_markup=reply_keyboards)
+            # Get all channels inside the database
+            async with aiosqlite.connect(db) as connect:
+                async with connect.cursor() as cursor:
+                    run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
+                    datas = await run_get_channel.fetchall()
+            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],
+                                               [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+
+            if datas:
+                for data in datas:
+                    # Create a new sublist for each button to display them vertically
+                    glassy_inline_keyboard_channels.insert(0, [
+                        InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+                inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
+
+                # Send message to page if database has channels
+                add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=inline_keyboard)
+                last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
+            else:
+                # Send message to page if database has no channels
+                cancell_button = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+                rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
+                add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=rep_cancell_btn)
 
         # go to homepage if user is inside add-delete-comment section
         if before_hashtag == 'add-delete-comment':
@@ -875,16 +907,13 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
 
             # Send message to page if database has channels
-            add_channel_message = await context.bot.send_message(update.effective_user.id, "🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", reply_markup=inline_keyboard)
+            add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=inline_keyboard)
             last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
         else:
             # Send message to page if database has no channels
             cancell_button = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
             rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
-            add_channel_message = await context.bot.send_message(update.effective_user.id,
-f"🥸 لطفا یکی از گزینه های زیر را انتخاب کنید.",
-                reply_markup=rep_cancell_btn
-            )
+            add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=rep_cancell_btn)
 
     # get excel file and send it to user whom want this file to be sended
     if query.data == 'get_excel_file':
