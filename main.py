@@ -694,6 +694,46 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         keys = InlineKeyboardMarkup(inline_keys)
         await bot.editMessageText(text="📣 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=after_hashtag_comment, reply_markup=keys)
 
+    if query.data == "choosed_yes":
+        try:
+            async with aiosqlite.connect(db) as connect:
+                async with connect.cursor() as cursor:
+                    fetch_last_item_ntd = await cursor.execute("SELECT yes_no_choosename, last_stp FROM ADMIN WHERE telegram_id = ?", (str(update.effective_user.id),))
+                    last_item = await fetch_last_item_ntd.fetchone()
+                    await cursor.execute("DELETE FROM tweet_data WHERE tweet_channel = ?", (last_item[0],))
+                    await connect.commit()
+                    try_result = True
+                    message_id = last_item[1].split('#')[1]
+        except Exception as delete_channel_exception:
+            debug_log(str(delete_channel_exception))
+            try_result = False
+        if try_result:
+            await context.bot.editMessageText(text=f"✅ کانال {last_item[0]} با موفقیت حذف شد.", chat_id=update.effective_user.id, message_id=message_id)
+            await asyncio.sleep(3)
+            # Get all channels inside the database
+            async with aiosqlite.connect(db) as connect:
+                async with connect.cursor() as cursor:
+                    run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
+                    datas = await run_get_channel.fetchall()
+            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],
+                                               [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+
+            if datas:
+                for data in datas:
+                    # Create a new sublist for each button to display them vertically
+                    glassy_inline_keyboard_channels.insert(0, [
+                        InlineKeyboardButton(text=f"{data[0]}", callback_data=f'{data[0]}')])
+                inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
+
+                # Send message to page if database has channels
+                add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=message_id, reply_markup=inline_keyboard)
+                last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
+            else:
+                # Send message to page if database has no channels
+                cancell_button = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+                rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
+                add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=message_id, reply_markup=rep_cancell_btn)
+
     # in here we will remove the exactly comment which user clicked on it based from user cache
     if query.data == 'want_delete':
         logger.success(
@@ -744,8 +784,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 async with connect.cursor() as cursor:
                     run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
                     datas = await run_get_channel.fetchall()
-            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],
-                                               [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")], [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
 
             if datas:
                 for data in datas:
