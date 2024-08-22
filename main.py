@@ -1290,20 +1290,13 @@ async def get_user_tweets():
                     logging.info(msg=f"new row updated from {channel_name} and new dataset has been added")
                 else:
                     logging.debug(msg=f"there is problem with adding data to database")
-                keyboards = [
-                    [InlineKeyboardButton('go to tweet page 🔗', url=tweet_link)],
-                ]
-                reply_markup_keyboard = InlineKeyboardMarkup(keyboards, )
+                keyboards = [[InlineKeyboardButton('👀 نمایش پست 👀👀 نمایش پست 👀', url=tweet_link)]]
+                reply_markup_keyboard = InlineKeyboardMarkup(keyboards)
                 for id in data:
                     await bot.send_message(chat_id=f"{id[0]}", text=f"""
-Hi user: {id[1]} 🌟
-I`ve sent this message:``{random_comment_text}``\n\n to tweet name: {tweet_title} 😉
-                \n
-to channel: {channel_name}
-
-and tweet id was: 🔢 {tweet_id}
-\n
-""", disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
+✏️ کامنت: {random_comment_text}
+📢 کانال: {channel_name}
+                    """, disable_web_page_preview=True, reply_markup=reply_markup_keyboard)
                 else:
                     pass
             except:
