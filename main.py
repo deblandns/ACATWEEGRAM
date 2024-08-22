@@ -1265,10 +1265,7 @@ async def get_user_tweets():
                         exc_type, exc_value, exc_tb = sys.exc_info()
                         return False
 
-                save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=f'{tweet_id}',
-                                                        tweet_title=f'{tweet_title}',
-                                                        used_comment=f'{random_comment_text}',
-                                                        tweet_link=f'{tweet_link}')
+                save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=tweet_id, tweet_title=tweet_title, used_comment=random_comment_text, tweet_link=tweet_link)
 
                 async def send_all_admin_ids():
                     async with aiosqlite.connect(db) as connect:
