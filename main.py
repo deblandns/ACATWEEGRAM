@@ -78,12 +78,6 @@ def DataCheckDecorator(func):
 # endregion
 
 # region random comment
-# todo: prevent writing repetitive functions
-
-# todo: add aiosqlite database to project
-
-# todo: read python telegram bot documentation and say them in interview
-
 
 used_comments = []
 
@@ -326,6 +320,8 @@ async def update_last_step_add_channel(userid, message_id):
                 return True
     except:
         return False
+
+
 # endregion
 
 
@@ -393,6 +389,8 @@ async def get_channel_data_loop():
             tweet_data = await get_data.fetchall()
             tweet_dic_data = {channel_name: channel_id for channel_name, channel_id in tweet_data}
             return tweet_dic_data
+
+
 # endregion
 
 # endregion
@@ -542,8 +540,10 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
                             add_channel_message = await context.bot.editMessageText(
                                 text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id,
                                 message_id=message_id_split, reply_markup=inline_keyboard)
-                            last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
-                            await context.bot.delete_message(chat_id=update.effective_user.id, message_id=update.message.message_id)
+                            last_step_update = await update_last_step_add_channel(str(update.effective_user.id),
+                                                                                  add_channel_message['message_id'])
+                            await context.bot.delete_message(chat_id=update.effective_user.id,
+                                                             message_id=update.message.message_id)
                         else:
                             # Send message to page if database has no channels
                             cancell_button = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
@@ -626,16 +626,22 @@ async def message_admin(update: Update, context: CallbackContext) -> None:
             if command_split == 'add-delete-comment':
                 is_insert = await insert_comment(update.message.text)
                 if is_insert:
-                    await context.bot.editMessageText(text=f"🖊 کامنت{update.message.text} با موفقیت اضافه شد", chat_id=update.effective_user.id, message_id=message_id_split)
+                    await context.bot.editMessageText(text=f"🖊 کامنت{update.message.text} با موفقیت اضافه شد",
+                                                      chat_id=update.effective_user.id, message_id=message_id_split)
                     await asyncio.sleep(3)
                     comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
                     # list of inline keyboards that contain cancel and comments inside database
-                    inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")], [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
+                    inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")],
+                                        [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
                     for comment in comments:
-                        inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
+                        inline_keyboards.insert(0, [
+                            InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
                     keyboards = InlineKeyboardMarkup(inline_keyboards)
-                    await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=message_id_split, reply_markup=keyboards)
-                    await context.bot.delete_message(chat_id=update.effective_user.id, message_id=update.message.message_id)
+                    await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                                chat_id=update.effective_user.id, message_id=message_id_split,
+                                                reply_markup=keyboards)
+                    await context.bot.delete_message(chat_id=update.effective_user.id,
+                                                     message_id=update.message.message_id)
             if command_split == 'start_command':
                 await bot.send_message(chat_id=update.effective_user.id,
                                        text=f"please click on one of the buttons you want to work with")
@@ -695,13 +701,17 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             try:
                 async with aiosqlite.connect(db) as connnect:
                     async with connnect.cursor() as cursor:
-                        await cursor.execute("UPDATE ADMIN SET yes_or_choosecomment = ? WHERE telegram_id = ?", (query.data.split('*')[0], str(update.effective_user.id)))
+                        await cursor.execute("UPDATE ADMIN SET yes_or_choosecomment = ? WHERE telegram_id = ?",
+                                             (query.data.split('*')[0], str(update.effective_user.id)))
                         await connnect.commit()
             except Exception as error_want_delete:
                 debug_log(str(error_want_delete))
-            inline_keys = [[InlineKeyboardButton(text="❌‌ خیر", callback_data="regret_to_delete_comment"), InlineKeyboardButton(text="✅ بله", callback_data="want_delete_comment")]]
+            inline_keys = [[InlineKeyboardButton(text="❌‌ خیر", callback_data="regret_to_delete_comment"),
+                            InlineKeyboardButton(text="✅ بله", callback_data="want_delete_comment")]]
             keys = InlineKeyboardMarkup(inline_keys)
-            await bot.editMessageText(text=f"آیا از حذف کردن کامنت {query.data.split('*')[0]} مطمئنید؟", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=keys)
+            await bot.editMessageText(text=f"آیا از حذف کردن کامنت {query.data.split('*')[0]} مطمئنید؟",
+                                      chat_id=update.effective_user.id, message_id=query.message.message_id,
+                                      reply_markup=keys)
     except:
         pass
     # endregion
@@ -714,13 +724,18 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 async with connect.cursor() as cursor:
                     try:
                         f_string_hesitation = f"hesitate_delete_comment#{query.message.message_id}"
-                        await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (f_string_hesitation, str(update.effective_user.id)))
+                        await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                             (f_string_hesitation, str(update.effective_user.id)))
                         await connect.commit()
                     except Exception as update_last_choose_error:
                         debug_log(str(update_last_choose_error))
-            inline_keys = [[InlineKeyboardButton(text="❌ حذف کامنت ❌", callback_data=f"{last_choose}*want_delete_comment")], [InlineKeyboardButton(text="➜ بازگشت", callback_data="cancell")]]
+            inline_keys = [
+                [InlineKeyboardButton(text="❌ حذف کامنت ❌", callback_data=f"{last_choose}*want_delete_comment")],
+                [InlineKeyboardButton(text="➜ بازگشت", callback_data="cancell")]]
             reply_key = InlineKeyboardMarkup(inline_keys)
-            await bot.editMessageText(text="✒️ لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_key)
+            await bot.editMessageText(text="✒️ لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                      chat_id=update.effective_user.id, message_id=query.message.message_id,
+                                      reply_markup=reply_key)
             return
     except:
         pass
@@ -740,7 +755,9 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             inline_keys = [[InlineKeyboardButton(text=f"❌‌ خیر", callback_data=f"choosed_no"),
                             InlineKeyboardButton(text=f"✅ بله", callback_data=f"choosed_yes")]]
             reply_inline_keyboards = InlineKeyboardMarkup(inline_keys)
-            await context.bot.editMessageText(text=f"آیا از حذف کردن کانال{query.data.split('%')[0]} مطمئنید؟", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_inline_keyboards)
+            await context.bot.editMessageText(text=f"آیا از حذف کردن کانال{query.data.split('%')[0]} مطمئنید؟",
+                                              chat_id=update.effective_user.id, message_id=query.message.message_id,
+                                              reply_markup=reply_inline_keyboards)
             return
     except:
         pass
@@ -770,7 +787,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 async with connect.cursor() as cursor:
                     try:
                         f_str_last_stp = f"hesitate_delete#{after_hashtag_comment}"
-                        await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (f_str_last_stp, str(update.effective_user.id)))
+                        await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                             (f_str_last_stp, str(update.effective_user.id)))
                         await connect.commit()
                         info_log(f"successfuly changed to hesitate to delete for user {update.effective_user.id}")
                     except Exception as hesitate_to_delete_last_stp_error:
@@ -781,20 +799,25 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 [InlineKeyboardButton(text="❌ حذف کانال ❌", callback_data=f"{last_choose}%want_delete_channel")],
                 [InlineKeyboardButton("➜ بازگشت", callback_data="cancell")]]
             keys = InlineKeyboardMarkup(inline_keys)
-            await bot.editMessageText(text="📣 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=after_hashtag_comment, reply_markup=keys)
+            await bot.editMessageText(text="📣 لطفا یکی از گزینه های زیر را انتخاب کنید.",
+                                      chat_id=update.effective_user.id, message_id=after_hashtag_comment,
+                                      reply_markup=keys)
     # region add comment
     if query.data == "add_comment":
         try:
             async with aiosqlite.connect(db) as connect:
                 async with connect.cursor() as cursor:
                     f_string_add_comment = f"add-delete-comment#{query.message.message_id}"
-                    await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (f_string_add_comment, str(update.effective_user.id,)))
+                    await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                         (f_string_add_comment, str(update.effective_user.id, )))
                     await connect.commit()
         except Exception as update_l_stp_add_comment_error:
             debug_log(str(update_l_stp_add_comment_error))
         Inline_key = [[InlineKeyboardButton(text="➜ بازگشت", callback_data='cancell')]]
         rep_key = InlineKeyboardMarkup(Inline_key)
-        await context.bot.editMessageText(text="☑️ لطفا کامنت مورد نظر خود را ارسال کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=rep_key)
+        await context.bot.editMessageText(text="☑️ لطفا کامنت مورد نظر خود را ارسال کنید",
+                                          chat_id=update.effective_user.id, message_id=query.message.message_id,
+                                          reply_markup=rep_key)
         pass
     # endregion
     # region user choosed to delete comment
@@ -802,7 +825,9 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         try:
             async with aiosqlite.connect(db) as connect:
                 async with connect.cursor() as cursor:
-                    fetch_last_item_ntd = await cursor.execute("SELECT yes_or_choosecomment, last_stp FROM ADMIN WHERE telegram_id = ?", (str(update.effective_user.id),))
+                    fetch_last_item_ntd = await cursor.execute(
+                        "SELECT yes_or_choosecomment, last_stp FROM ADMIN WHERE telegram_id = ?",
+                        (str(update.effective_user.id),))
                     last_item = await fetch_last_item_ntd.fetchone()
                     await cursor.execute("DELETE FROM comments WHERE comment_title = ?", (last_item[0],))
                     await connect.commit()
@@ -812,7 +837,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             debug_log(str(delete_channel_exception))
             try_result = False
         if try_result:
-            await context.bot.editMessageText(text=f"✅ کامنت {last_item[0]} با موفقیت حذف شد", chat_id=update.effective_user.id, message_id=message_id)
+            await context.bot.editMessageText(text=f"✅ کامنت {last_item[0]} با موفقیت حذف شد",
+                                              chat_id=update.effective_user.id, message_id=message_id)
         await asyncio.sleep(3)
         # get last message id
         comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
@@ -820,9 +846,11 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")],
                             [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
         for comment in comments:
-            inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
+            inline_keyboards.insert(0, [
+                InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
         keyboards = InlineKeyboardMarkup(inline_keyboards)
-        await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
+        await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                    chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
     # endregion
 
     # if user clicked on add channel from source channels lists
@@ -831,7 +859,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             async with aiosqlite.connect(db) as connect:
                 async with connect.cursor() as cursor:
                     string_stp_addchannel = f"add_channel#{query.message.message_id}"
-                    await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?", (string_stp_addchannel, str(update.effective_user.id)))
+                    await cursor.execute("UPDATE ADMIN SET last_stp = ? WHERE telegram_id = ?",
+                                         (string_stp_addchannel, str(update.effective_user.id)))
                     await connect.commit()
                     try_update_stp = True
         except Exception as update_last_stp_error:
@@ -840,20 +869,26 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         if try_update_stp:
             inline_keyboard = [[InlineKeyboardButton(text=f'➜ بازگشت', callback_data=f"cancell")]]
             reply_key = InlineKeyboardMarkup(inline_keyboard)
-            await context.bot.editMessageText(text=f"💁‍♂ لطفا آیدی کانال مورد نظر خود را به صورت @channelname ارسال کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_key)
+            await context.bot.editMessageText(
+                text=f"💁‍♂ لطفا آیدی کانال مورد نظر خود را به صورت @channelname ارسال کنید",
+                chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_key)
     # region regret deleting the comment
     if query.data == "regret_to_delete_comment":
         try:
             async with aiosqlite.connect(db) as connect:
                 async with connect.cursor() as cursor:
-                    yes_or_no_comment = await cursor.execute("SELECT yes_or_choosecomment FROM ADMIN WHERE telegram_id = ?", (str(update.effective_user.id), ))
+                    yes_or_no_comment = await cursor.execute(
+                        "SELECT yes_or_choosecomment FROM ADMIN WHERE telegram_id = ?",
+                        (str(update.effective_user.id),))
                     fetch_yes_or_no = await yes_or_no_comment.fetchone()
         except Exception as get_yes_or_no_exception:
             debug_log(str(get_yes_or_no_exception))
-        inline_keys = [[InlineKeyboardButton(text="❌ حذف کامنت ❌", callback_data=f"{fetch_yes_or_no[0]}*want_delete_comment")],
-                       [InlineKeyboardButton(text="➜ بازگشت", callback_data="cancell")]]
+        inline_keys = [
+            [InlineKeyboardButton(text="❌ حذف کامنت ❌", callback_data=f"{fetch_yes_or_no[0]}*want_delete_comment")],
+            [InlineKeyboardButton(text="➜ بازگشت", callback_data="cancell")]]
         reply_key = InlineKeyboardMarkup(inline_keys)
-        await bot.editMessageText(text="✒️ لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_key)
+        await bot.editMessageText(text="✒️ لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id,
+                                  message_id=query.message.message_id, reply_markup=reply_key)
         return
     # endregion
 
@@ -862,14 +897,16 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         async with aiosqlite.connect(db) as connect:
             async with connect.cursor() as cursor:
                 try:
-                    fetch_data = await cursor.execute("SELECT yes_no_choosename FROM ADMIN WHERE telegram_id = ?", (str(update.effective_user.id),))
+                    fetch_data = await cursor.execute("SELECT yes_no_choosename FROM ADMIN WHERE telegram_id = ?",
+                                                      (str(update.effective_user.id),))
                     data = await fetch_data.fetchone()
                 except Exception as get_last_item_wanted_to_delete_error:
                     debug_log(str(get_last_item_wanted_to_delete_error))
         inline_keys = [[InlineKeyboardButton(text="❌ حذف کانال ❌", callback_data=f"{data[0]}%want_delete_channel")],
                        [InlineKeyboardButton("➜ بازگشت", callback_data="cancell")]]
         keys = InlineKeyboardMarkup(inline_keys)
-        await bot.editMessageText(text="📣 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id, message_id=after_hashtag_comment, reply_markup=keys)
+        await bot.editMessageText(text="📣 لطفا یکی از گزینه های زیر را انتخاب کنید.", chat_id=update.effective_user.id,
+                                  message_id=after_hashtag_comment, reply_markup=keys)
 
     # if user choosed yes that user want to delete the channel from database all processing will go below
     if query.data == "choosed_yes":
@@ -922,7 +959,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
     # in here we will remove the exactly comment which user clicked on it based from user cache
     if query.data == 'want_delete':
-        logger.success(f"data that have to remove is {context.user_data.get(update.effective_user.id)}")  # this will show log of success to continue other process
+        logger.success(
+            f"data that have to remove is {context.user_data.get(update.effective_user.id)}")  # this will show log of success to continue other process
         user_last_comment_data = context.user_data.get(update.effective_user.id)
         remove_comment = await delete_comment(user_last_comment_data)  # this will delete comment
         if remove_comment:
@@ -946,7 +984,9 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                                       chat_id=update.effective_user.id,
                                       message_id=after_hashtag)
             await asyncio.sleep(3)
-            await bot.editMessageText(text=f"if you want to add comment send it as a message or if you want to delete message exist click on them", chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=keyboards)
+            await bot.editMessageText(
+                text=f"if you want to add comment send it as a message or if you want to delete message exist click on them",
+                chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=keyboards)
     if query.data == 'cancell':
         user_last_stp_check = await check_last_step(update.effective_user.id)
         try:
@@ -971,21 +1011,27 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             else:
                 logger.warning(f"user {update.effective_user.username} can not update the last step to add or delete")
             # list of inline keyboards that contain cancel and comments inside database
-            inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")], [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
-            for comment in comments:
-                inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
-            keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
-        if before_hashtag == "add-delete-comment":
-            add_delete_comment = await add_or_delete_comment(update.effective_user.id, query.message.message_id)
-            # get last message id
-            comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
-            inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")], [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
+            inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")],
+                                [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
             for comment in comments:
                 inline_keyboards.insert(0, [
                     InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
             keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=keyboards)
+            await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                        chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
+        if before_hashtag == "add-delete-comment":
+            add_delete_comment = await add_or_delete_comment(update.effective_user.id, query.message.message_id)
+            # get last message id
+            comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
+            inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")],
+                                [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
+            for comment in comments:
+                inline_keyboards.insert(0, [
+                    InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
+            keyboards = InlineKeyboardMarkup(inline_keyboards)
+            await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                        chat_id=update.effective_user.id, message_id=query.message.message_id,
+                                        reply_markup=keyboards)
             return
 
         # region choosing comment cancell
@@ -995,7 +1041,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
                 [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.editMessageText(text="کاربر DEBLANDNS به ربات خوش آمدید🤑", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_keyboards)
+            await bot.editMessageText(text="کاربر DEBLANDNS به ربات خوش آمدید🤑", chat_id=update.effective_user.id,
+                                      message_id=query.message.message_id, reply_markup=reply_keyboards)
         # endregion
 
         if before_hashtag == "hesitate_delete":
@@ -1004,7 +1051,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 async with connect.cursor() as cursor:
                     run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
                     datas = await run_get_channel.fetchall()
-            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")], [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],
+                                               [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
 
             if datas:
                 for data in datas:
@@ -1034,7 +1082,7 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
             ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.editMessageText(text="کاربر DEBLANDNS به ربات خوش آمدید🤑", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_keyboards)
+            await bot.editMessageText(text=f"کاربر {update.effective_user.username} به ربات خوش آمدید🤑", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=reply_keyboards)
 
         if before_hashtag == 'homepage':
             logger.info(f"user redirected from homepage to homepage again")
@@ -1042,9 +1090,9 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 [InlineKeyboardButton(text=f"𝕏 مدیریت کانال های توییتر 𝕏", callback_data='add-channel-start-key')],
                 [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
                 [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
-                ]
+            ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
-            await bot.editMessageText(text=f"کاربر DEBLANDNS به ربات خوش آمدید🤑", chat_id=update.effective_user.id,
+            await bot.editMessageText(text=f"کاربر {update.effective_user.username} به ربات خوش آمدید🤑", chat_id=update.effective_user.id,
                                       message_id=query.message.message_id, reply_markup=reply_keyboards)
 
         if without_hashtag == 'homepage':
@@ -1066,7 +1114,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
                 async with connect.cursor() as cursor:
                     run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
                     datas = await run_get_channel.fetchall()
-            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")], [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+            glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],
+                                               [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
 
             if datas:
                 for data in datas:
@@ -1091,19 +1140,21 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
 
         # go to homepage if user is inside add-delete-comment section
         if before_hashtag == 'add-delete-comment':
-            logger.info(f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
+            logger.info(
+                f'user {update.effective_user.username} cancelled and redirected to homepage from add add email')
             inline_keyboards = [
                 [InlineKeyboardButton(text=f"𝕏 مدیریت کانال های توییتر 𝕏", callback_data='add-channel-start-key')],
                 [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
                 [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]
-                ]
+            ]
             reply_keyboards = InlineKeyboardMarkup(inline_keyboards)
             await bot.editMessageText(
                 text=f"کاربر DEBLANDNS به ربات خوش آمدید🤑",
                 chat_id=update.effective_user.id, message_id=after_hashtag, reply_markup=reply_keyboards)
 
     if query.data == 'add-channel-start-key':
-        logger.info(f"user {update.effective_user.username} with id {update.effective_user.id} clicked on add channel key")
+        logger.info(
+            f"user {update.effective_user.username} with id {update.effective_user.id} clicked on add channel key")
         await query.answer(text="channels must start with @ sign", show_alert=False)
         message_id = query.message.message_id
 
@@ -1112,7 +1163,8 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             async with connect.cursor() as cursor:
                 run_get_channel = await cursor.execute("SELECT tweet_channel FROM tweet_data")
                 datas = await run_get_channel.fetchall()
-        glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")], [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
+        glassy_inline_keyboard_channels = [[InlineKeyboardButton("➕ افزودن کانال ➕", callback_data="add_channel")],
+                                           [InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
 
         if datas:
             for data in datas:
@@ -1122,13 +1174,20 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
             inline_keyboard = InlineKeyboardMarkup(glassy_inline_keyboard_channels)
 
             # Send message to page if database has channels
-            add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=inline_keyboard)
-            last_step_update = await update_last_step_add_channel(str(update.effective_user.id), add_channel_message['message_id'])
+            add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                                                    chat_id=update.effective_user.id,
+                                                                    message_id=query.message.message_id,
+                                                                    reply_markup=inline_keyboard)
+            last_step_update = await update_last_step_add_channel(str(update.effective_user.id),
+                                                                  add_channel_message['message_id'])
         else:
             # Send message to page if database has no channels
             cancell_button = [[InlineKeyboardButton(text=f"➜ بازگشت", callback_data=f"cancell")]]
             rep_cancell_btn = InlineKeyboardMarkup(cancell_button)
-            add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید",chat_id=update.effective_user.id, message_id=query.message.message_id, reply_markup=rep_cancell_btn)
+            add_channel_message = await context.bot.editMessageText(text="🥸 لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                                                    chat_id=update.effective_user.id,
+                                                                    message_id=query.message.message_id,
+                                                                    reply_markup=rep_cancell_btn)
 
     # get excel file and send it to user whom want this file to be sended
     if query.data == 'get_excel_file':
@@ -1142,11 +1201,13 @@ async def call_back_notifications(update: Update, context: CallbackContext) -> N
         await bot.editMessageText(text=f"here is your document you can open it with excel opener app 😁",
                                   chat_id=chat_id, message_id=message_id)
         await asyncio.sleep(4)
-        keyboards = [[InlineKeyboardButton(text=f'𝕏 مدیریت کانال های توییتر 𝕏', callback_data=f'add-channel-start-key')], [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")], [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]]
+        keyboards = [
+            [InlineKeyboardButton(text=f'𝕏 مدیریت کانال های توییتر 𝕏', callback_data=f'add-channel-start-key')],
+            [InlineKeyboardButton(text=f"📥 دریافت اکسل 📥", callback_data=f"get_excel_file")],
+            [InlineKeyboardButton(text=f"✏️ مدیریت کامنت ها ✏️", callback_data=f"add-&-delete_comment")]]
         inline_keyboards = InlineKeyboardMarkup(keyboards)
         await bot.editMessageText(text=f"""
-Hi Admin 🧨 if you want to add channel to get data from and auto comment click on add_channel 
-and if you want to get comments posted beside their links click on 📥 دریافت اکسل 📥
+کاربر{update.effective_user.username} به ربات خوش آمدید🤑
 """, chat_id=chat_id, message_id=message_id, reply_markup=inline_keyboards)
 
     if query.data == 'add-&-delete_comment':
@@ -1154,25 +1215,30 @@ and if you want to get comments posted beside their links click on 📥 دریا
         add_delete_comment = await add_or_delete_comment(update.effective_user.id, message_id)
         # get last message id
         comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
-        logger.info(f"all of comments are {comments}")  # this log will show the back-end developers about comments  # update last_step of user
+        logger.info(
+            f"all of comments are {comments}")  # this log will show the back-end developers about comments  # update last_step of user
         # if user data enter correctly we can add dataset of updates and make a log
         if add_delete_comment:
             logger.success(f"user {update.effective_user.username} updated last stp of add or delete comment")
         else:
             logger.warning(f"user {update.effective_user.username} can not update the last step to add or delete")
         # list of inline keyboards that contain cancel and comments inside database
-        inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")], [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
+        inline_keyboards = [[InlineKeyboardButton("✏️ افزودن کامنت ✏️", callback_data="add_comment")],
+                            [InlineKeyboardButton(f"➜ بازگشت", callback_data='cancell')]]
         for comment in comments:
-            inline_keyboards.insert(0, [InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
+            inline_keyboards.insert(0, [
+                InlineKeyboardButton(f"{comment[0]}", callback_data=f"{comment[0]}-choosed_comment")])
         keyboards = InlineKeyboardMarkup(inline_keyboards)
-        await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید", chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
+        await bot.edit_message_text(text=f"👇 لطفا یکی از گزینه های زیر را انتخاب کنید",
+                                    chat_id=update.effective_user.id, message_id=message_id, reply_markup=keyboards)
 
     if query.data == 'regret_delete_comment':
         # get last message id
         message_id = query.message.message_id
         comments = await get_all_comments()  # this will get the comments inside database to make it visible for user
         logger.info(f"all of comments are {comments}")  # this log will show the back-end developers about comments
-        add_delete_comment = await add_or_delete_comment(update.effective_user.id, message_id)  # update last_step of user
+        add_delete_comment = await add_or_delete_comment(update.effective_user.id,
+                                                         message_id)  # update last_step of user
         # if user data enter correctly we can add dataset of updates and make a log
         if add_delete_comment:
             logger.success(f"user {update.effective_user.username} updated last stp of add or delete comment")
@@ -1232,7 +1298,8 @@ async def get_user_tweets():
             # this variable will run sql command and get tweet_id number from tweet_data database based on channel name
             async with aiosqlite.connect(db) as connect:
                 async with connect.cursor() as cursor:
-                    get_all_data_equal_to_tweet_channel = await cursor.execute("SELECT tweet_id FROM tweet_data WHERE tweet_channel = ?", (tweet_channel,))
+                    get_all_data_equal_to_tweet_channel = await cursor.execute(
+                        "SELECT tweet_id FROM tweet_data WHERE tweet_channel = ?", (tweet_channel,))
                     tweet_sql_id = await get_all_data_equal_to_tweet_channel.fetchone()[0]
                 if tweet_sql_id == tweet_id:
                     return True
@@ -1243,19 +1310,25 @@ async def get_user_tweets():
 
         # this function will get inputs and save them or update them and then send comment
         if is_equal:
-            logger.info(f"data is equal so we don`t get any tweet of this channel {channel_name} until we get new tweet")
+            logger.info(
+                f"data is equal so we don`t get any tweet of this channel {channel_name} until we get new tweet")
             pass
         else:
             try:
                 # if data is not equal it mean there are new post so it will send comment and change the row data
-                tweet_link = await send_comment(f'{random_comment_text}', post_id=f'{tweet_id}', channel_name=channel_name)
+                tweet_link = await send_comment(f'{random_comment_text}', post_id=f'{tweet_id}',
+                                                channel_name=channel_name)
 
                 # this function will update or insert data when is necessary and check the new dataset
-                async def update_data_or_insert(tweet_channel: str, tweet_id: str, tweet_title: str, used_comment: str, tweet_link: str) -> bool:
+                async def update_data_or_insert(tweet_channel: str, tweet_id: str, tweet_title: str, used_comment: str,
+                                                tweet_link: str) -> bool:
                     try:
                         async with aiosqlite.connect(db) as connect:
                             async with connect.cursor() as cursor:
-                                await cursor.execute("UPDATE tweet_data SET tweet_id = ?, tweet_title = ?, used_comment = ?, tweet_link = ? WHERE tweet_channel = ?", (str(tweet_id), str(tweet_title), str(used_comment), str(tweet_link), str(tweet_channel)))
+                                await cursor.execute(
+                                    "UPDATE tweet_data SET tweet_id = ?, tweet_title = ?, used_comment = ?, tweet_link = ? WHERE tweet_channel = ?",
+                                    (str(tweet_id), str(tweet_title), str(used_comment), str(tweet_link),
+                                     str(tweet_channel)))
                                 await connect.commit()
                                 return True
                     except sql.Error as er:
@@ -1265,7 +1338,9 @@ async def get_user_tweets():
                         exc_type, exc_value, exc_tb = sys.exc_info()
                         return False
 
-                save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=tweet_id, tweet_title=tweet_title, used_comment=random_comment_text, tweet_link=tweet_link)
+                save_data = await update_data_or_insert(tweet_channel=f'@{channel_name}', tweet_id=tweet_id,
+                                                        tweet_title=tweet_title, used_comment=random_comment_text,
+                                                        tweet_link=tweet_link)
 
                 async def send_all_admin_ids():
                     async with aiosqlite.connect(db) as connect:
@@ -1303,26 +1378,29 @@ async def get_user_tweets():
                 logger.critical(f'can`t send message may it`s repetitive inside {channel_name}')
 
 
-async def run_forever():
-    while True:
+async def run_queue_get_tweet_data(context: CallbackContext) -> None:
+    try:
+        success_log("function in a interval of time inside the job queue started working")
         await get_user_tweets()
-        await asyncio.sleep(1 * 60)  # Adjust the sleep time as needed to control the frequency of the requests
+    except Exception as run_repeating_queue_exception:
+        debug_log(str(run_repeating_queue_exception))
 
 
 # this section will monitoring the data from sources that we need to know about themselves posts and then will comment randomly under their posts
 # after that it will let admin know and send link to admin beside the all data of that posts of pages it should be very fast and avoid spaming a lot
 # because my it block our bot and our services
+def main():
+    # Create the application and pass it your bot's token
+    app = ApplicationBuilder().http_version(http_version='2').token(token).build()
+    app.add_handler(CommandHandler('start', start))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
+    app.add_handler(CallbackQueryHandler(call_back_notifications))
+    app.job_queue.run_repeating(run_queue_get_tweet_data, interval=60)
+    # Start the async task to fetch tweets
+    logger.success(f"bot is running successfully")
+    app.run_polling()
+
+
 if __name__ == "__main__":
     loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_forever())
-
-# Create the application and pass it your bot's token
-app = ApplicationBuilder().http_version(http_version='2').token(token).build()
-app.add_handler(CommandHandler('start', start))
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_admin))
-app.add_handler(CallbackQueryHandler(call_back_notifications))
-
-# Start the async task to fetch tweets
-if app.run_polling:
-    logger.success(f"bot is running successfully")
-app.run_polling()
+    loop.run_until_complete(main())
